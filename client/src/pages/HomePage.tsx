@@ -36,11 +36,18 @@ export function HomePage() {
           <div className="text-4xl mb-2">⚽</div>
           <h1 className="text-3xl font-bold mb-2">FIFA Weltmeisterschaft 2026</h1>
           <p className="text-green-100 mb-1">USA · Kanada · Mexiko</p>
-          <p className="text-green-200 text-sm mb-4">
+          <p className="text-green-200 text-sm mb-1">
             {tournamentStarted
               ? 'Das Turnier läuft!'
-              : `Startet in ${formatDistanceToNow(TOURNAMENT_START, { locale: de })}`}
+              : `Startet in ${formatDistanceToNow(TOURNAMENT_START, { locale: de })
+                  .replace(/\bMonate(?!n)/g, 'Monaten')
+                  .replace(/\bTage(?!n)/g, 'Tagen')}`}
           </p>
+          <div className="flex items-center gap-4 text-xs text-green-300 mb-4">
+            <span title="Maple — Kanadischer Elch (Kanada)">🫎 Maple</span>
+            <span title="Zayu — Jaguar (Mexiko)">🐆 Zayu</span>
+            <span title="Clutch — Weißkopfseeadler (USA)">🦅 Clutch</span>
+          </div>
 
           {user ? (
             <Link

@@ -20,9 +20,13 @@ export function CountdownTimer({ kickoffUtc }: CountdownTimerProps) {
     return <span className="text-xs text-gray-400">Abgelaufen</span>;
   }
 
+  const distance = formatDistanceToNow(date, { locale: de })
+    .replace(/\bMonate(?!n)/g, 'Monaten')
+    .replace(/\bTage(?!n)/g, 'Tagen');
+
   return (
     <span className="text-xs text-blue-600 font-medium">
-      in {formatDistanceToNow(date, { locale: de })}
+      in {distance}
     </span>
   );
 }
