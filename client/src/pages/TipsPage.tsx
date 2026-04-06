@@ -40,7 +40,7 @@ export function TipsPage() {
   );
 
   const tippedCount  = Object.keys(tipMap).length;
-  const totalMatches = 72;
+  const totalMatches = matches?.length ?? 0;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
