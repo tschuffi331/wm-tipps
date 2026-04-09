@@ -26,10 +26,18 @@ export function MatchCard({ match, tip, onTipSaved, isLoggedIn }: MatchCardProps
     try {
       let saved: Tip;
       if (currentTip) {
-        saved = await updateTip(currentTip.id, home, away);
+        await updateTip(currentTip.id, home, away);
         saved = { ...currentTip, home_goals_tip: home, away_goals_tip: away };
       } else {
-        saved = await submitTip(match.id, home, away);
+        const response = await submitTip(match.id, home, away);
+        saved = {
+          id:             response.id,
+          match_id:       match.id,
+          home_goals_tip: home,
+          away_goals_tip: away,
+          points_awarded: null,
+          submitted_at:   new Date().toISOString(),
+        };
       }
       setCurrentTip(saved);
       onTipSaved(saved);
