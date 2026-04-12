@@ -17,6 +17,9 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
+# Copy SQL migration files (tsc only compiles .ts, not .sql)
+RUN cp -r src/db/migrations dist/db/migrations
+
 EXPOSE 3001
 
 CMD ["node", "dist/server.js"]
