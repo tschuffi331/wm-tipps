@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git remote:*)",
+      "Bash(git checkout:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git fetch:*)",
+      "Bash(git rebase:*)",
+      "Bash(git stash:*)",
+      "Bash(git pull:*)",
+      "Bash(git add:*)",
+      "WebFetch(domain:sport.sky.de)",
+      "WebFetch(domain:www.fifa.com)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:theathletic.com)",
+      "WebFetch(domain:www.espn.com)",
+      "WebFetch(domain:www.skysports.com)",
+      "WebFetch(domain:www.marca.com)",
+      "WebFetch(domain:www.eurosport.de)",
+      "WebFetch(domain:www.sportschau.de)",
+      "WebFetch(domain:www.goal.com)",
+      "WebFetch(domain:www.weltfussball.de)",
+      "WebFetch(domain:www.11freunde.de)",
+      "WebFetch(domain:www.sportsnet.ca)",
+      "WebFetch(domain:m.worldfootball.net)",
+      "WebFetch(domain:www.worldfootball.net)",
+      "WebFetch(domain:www.foxsports.com)",
+      "WebFetch(domain:www.nbcsports.com)",
+      "WebFetch(domain:webcache.googleusercontent.com)",
+      "WebFetch(domain:www.zdfheute.de)"
+    ]
+  }
+}
