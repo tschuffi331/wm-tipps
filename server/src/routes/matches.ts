@@ -27,7 +27,7 @@ router.get('/', (req: Request, res: Response) => {
 
   sql += ' ORDER BY m.kickoff_utc ASC, m.match_number ASC';
 
-  const rows = db.prepare(sql).all(...params);
+  const rows = db.prepare(sql).all(...params) as MatchRow[];
   res.json(rows.map(formatMatch));
 });
 
