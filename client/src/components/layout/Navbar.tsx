@@ -15,7 +15,7 @@ export function Navbar() {
     <nav className="bg-wm-dark text-white shadow-lg sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         <NavLink to="/" className="flex flex-col leading-tight font-bold text-wm-gold hover:opacity-90 transition-opacity">
-          <span className="text-lg">🫎🐆🦅 WM Tipps 2026</span>
+          <span className="text-lg">WM Tipps 2026</span>
           <span className="text-[10px] font-normal text-gray-400 tracking-wide">generiert durch Claude</span>
         </NavLink>
 

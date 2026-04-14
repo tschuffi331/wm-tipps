@@ -43,12 +43,6 @@ export function HomePage() {
                   .replace(/\bMonate(?!n)/g, 'Monaten')
                   .replace(/\bTage(?!n)/g, 'Tagen')}`}
           </p>
-          <div className="flex items-center gap-4 text-xs text-green-300 mb-4">
-            <span title="Maple — Kanadischer Elch (Kanada)">🫎 Maple</span>
-            <span title="Zayu — Jaguar (Mexiko)">🐆 Zayu</span>
-            <span title="Clutch — Weißkopfseeadler (USA)">🦅 Clutch</span>
-          </div>
-
           {user ? (
             <Link
               to="/tips"
