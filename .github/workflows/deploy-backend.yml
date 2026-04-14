@@ -31,7 +31,11 @@ jobs:
         working-directory: server
         run: npm run build
 
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
       - name: Deploy to Railway
-        uses: railwayapp/railway-github-action@v2
-        with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+        working-directory: server
+        run: railway up --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
