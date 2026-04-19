@@ -15,7 +15,6 @@ router.get('/', (_req: Request, res: Response) => {
            COUNT(t.id)                                                  AS tips_total
     FROM   users u
     LEFT JOIN tips t ON t.user_id = u.id
-    WHERE  u.role = 'user'
     GROUP  BY u.id
     ORDER  BY total_points DESC, exact_scores DESC, u.username ASC
   `).all() as Array<{
