@@ -11,6 +11,7 @@ import { TipsPage }       from './pages/TipsPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { ProfilePage }    from './pages/ProfilePage';
 import { AdminPage }      from './pages/AdminPage';
+import { RulesPage }      from './pages/RulesPage';
 import { NotFoundPage }   from './pages/NotFoundPage';
 
 const queryClient = new QueryClient({
@@ -30,6 +31,7 @@ export default function App() {
                 <Route path="/login"      element={<LoginPage />} />
                 <Route path="/register"   element={<RegisterPage />} />
                 <Route path="/leaderboard" element={<LeaderboardPage />} />
+                <Route path="/rules"      element={<RulesPage />} />
 
                 <Route path="/tips" element={
                   <ProtectedRoute><TipsPage /></ProtectedRoute>

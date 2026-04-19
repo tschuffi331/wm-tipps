@@ -28,6 +28,14 @@ export function Navbar() {
           >
             Rangliste
           </NavLink>
+          <NavLink
+            to="/rules"
+            className={({ isActive }) =>
+              isActive ? 'text-wm-gold font-semibold' : 'text-gray-300 hover:text-white transition-colors'
+            }
+          >
+            Regeln
+          </NavLink>
 
           {user ? (
             <>
