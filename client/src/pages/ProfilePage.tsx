@@ -3,11 +3,39 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { Avatar } from '../components/common/Avatar';
 import { updateAvatar, deleteAvatar } from '../api/admin';
+import { changePassword } from '../api/settings';
 
 export function ProfilePage() {
   const { user, updateUser } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pwCurrent, setPwCurrent] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (pwNew !== pwConfirm) {
+      toast.error('Neues Passwort stimmt nicht überein');
+      return;
+    }
+    setPwSaving(true);
+    try {
+      await changePassword(pwCurrent, pwNew);
+      toast.success('Passwort erfolgreich geändert!');
+      setPwOpen(false);
+      setPwCurrent(''); setPwNew(''); setPwConfirm('');
+    } catch (err: unknown) {
+      toast.error(
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Fehler beim Ändern'
+      );
+    } finally {
+      setPwSaving(false);
+    }
+  }
 
   if (!user) return null;
 
@@ -79,6 +107,59 @@ export function ProfilePage() {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Passwort ändern */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mt-4">
+        <button
+          onClick={() => setPwOpen(o => !o)}
+          className="w-full flex items-center justify-between px-6 py-4 text-left"
+        >
+          <span className="font-semibold text-gray-800">Passwort ändern</span>
+          <span className="text-gray-400 text-lg">{pwOpen ? '▲' : '▼'}</span>
+        </button>
+
+        {pwOpen && (
+          <form onSubmit={handleChangePassword} className="px-6 pb-6 space-y-3 border-t pt-4">
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Aktuelles Passwort</label>
+              <input
+                type="password"
+                value={pwCurrent}
+                onChange={e => setPwCurrent(e.target.value)}
+                required
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-wm-green"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Neues Passwort</label>
+              <input
+                type="password"
+                value={pwNew}
+                onChange={e => setPwNew(e.target.value)}
+                required
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-wm-green"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Neues Passwort bestätigen</label>
+              <input
+                type="password"
+                value={pwConfirm}
+                onChange={e => setPwConfirm(e.target.value)}
+                required
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-wm-green"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={pwSaving}
+              className="w-full bg-wm-green text-white font-semibold py-2.5 rounded-lg hover:bg-green-800 disabled:opacity-50 transition-colors"
+            >
+              {pwSaving ? 'Speichern...' : 'Passwort speichern'}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import db from '../db/database';
 import { upload } from '../middleware/upload';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { getDiceBearUrl } from '../services/avatarService';
+import { getPasswordRules, validatePassword } from '../utils/passwordValidator';
 
 const router = Router();
 
@@ -22,10 +23,8 @@ router.post('/register', upload.single('avatar'), async (req: Request, res: Resp
     res.status(400).json({ error: 'Username must be 3–30 characters' });
     return;
   }
-  if (password.length < 6) {
-    res.status(400).json({ error: 'Password must be at least 6 characters' });
-    return;
-  }
+  const pwError = validatePassword(password, getPasswordRules());
+  if (pwError) { res.status(400).json({ error: pwError }); return; }
 
   const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
   if (existing) {

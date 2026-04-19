@@ -52,3 +52,9 @@ export interface AuthResponse {
   token: string;
   user: User;
 }
+
+export interface PasswordRules {
+  minLength: number;
+  requireDigit: boolean;
+  requireSpecial: boolean;
+}

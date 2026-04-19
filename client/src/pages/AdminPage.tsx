@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { fetchAdminMatches, setMatchResult } from '../api/admin';
+import { getPasswordRules, updatePasswordRules } from '../api/settings';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import type { Match } from '../types';
+import type { Match, PasswordRules } from '../types';
 
 export function AdminPage() {
   const queryClient = useQueryClient();
@@ -16,6 +17,24 @@ export function AdminPage() {
 
   const [editing, setEditing] = useState<{ matchId: number; home: string; away: string } | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Password rules
+  const { data: pwRules } = useQuery<PasswordRules>({
+    queryKey: ['pwRules'],
+    queryFn: getPasswordRules,
+  });
+  const [pwDraft, setPwDraft] = useState<PasswordRules | null>(null);
+  const rules = pwDraft ?? pwRules;
+
+  const savePwRules = useMutation({
+    mutationFn: (r: PasswordRules) => updatePasswordRules(r),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(['pwRules'], saved);
+      setPwDraft(null);
+      toast.success('Passwortregeln gespeichert');
+    },
+    onError: () => toast.error('Fehler beim Speichern'),
+  });
 
   function startEdit(match: Match) {
     setEditing({
@@ -61,6 +80,62 @@ export function AdminPage() {
       <p className="text-sm text-gray-500 mb-6">
         Klicke auf ein Spiel, um das Ergebnis einzutragen. Punkte werden sofort neu berechnet.
       </p>
+
+      {/* Passwortregeln */}
+      {rules && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-8">
+          <h2 className="text-base font-bold text-wm-dark mb-4">Passwortregeln</h2>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <label className="text-sm text-gray-700 w-44 shrink-0">Mindestlänge</label>
+              <input
+                type="number" min={1} max={64}
+                value={rules.minLength}
+                onChange={e => setPwDraft({ ...(rules), minLength: Number(e.target.value) })}
+                className="w-20 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-wm-green"
+              />
+              <span className="text-sm text-gray-400">Zeichen</span>
+            </div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rules.requireDigit}
+                onChange={e => setPwDraft({ ...(rules), requireDigit: e.target.checked })}
+                className="w-4 h-4 accent-wm-green"
+              />
+              <span className="text-sm text-gray-700">Mindestens eine Ziffer (0–9) erforderlich</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rules.requireSpecial}
+                onChange={e => setPwDraft({ ...(rules), requireSpecial: e.target.checked })}
+                className="w-4 h-4 accent-wm-green"
+              />
+              <span className="text-sm text-gray-700">Mindestens ein Sonderzeichen erforderlich</span>
+            </label>
+          </div>
+          {pwDraft && (
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => savePwRules.mutate(pwDraft)}
+                disabled={savePwRules.isPending}
+                className="px-4 py-1.5 bg-wm-green text-white text-sm font-semibold rounded-lg hover:bg-green-800 disabled:opacity-50 transition-colors"
+              >
+                {savePwRules.isPending ? 'Speichern...' : 'Speichern'}
+              </button>
+              <button
+                onClick={() => setPwDraft(null)}
+                className="px-4 py-1.5 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Abbrechen
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Spielergebnisse */}
 
       {Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([group, groupMatches]) => (
         <div key={group} className="mb-8">

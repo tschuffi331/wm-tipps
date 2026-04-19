@@ -3,6 +3,7 @@ import db from '../db/database';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { requireAdmin } from '../middleware/isAdmin';
 import { recalculateMatchTips } from '../services/scoringService';
+import { getPasswordRules } from '../utils/passwordValidator';
 
 const router = Router();
 
@@ -68,6 +69,36 @@ router.get('/matches', requireAuth, requireAdmin, (_req: AuthRequest, res: Respo
   }));
 
   res.json(formatted);
+});
+
+// GET /api/admin/settings
+router.get('/settings', requireAuth, requireAdmin, (_req: AuthRequest, res: Response) => {
+  res.json(getPasswordRules());
+});
+
+// PUT /api/admin/settings
+router.put('/settings', requireAuth, requireAdmin, (req: AuthRequest, res: Response) => {
+  const { minLength, requireDigit, requireSpecial } = req.body as {
+    minLength?: number;
+    requireDigit?: boolean;
+    requireSpecial?: boolean;
+  };
+
+  if (minLength !== undefined) {
+    if (!Number.isInteger(minLength) || minLength < 1 || minLength > 64) {
+      res.status(400).json({ error: 'minLength must be an integer between 1 and 64' });
+      return;
+    }
+    db.prepare("UPDATE settings SET value = ? WHERE key = 'pw_min_length'").run(String(minLength));
+  }
+  if (requireDigit !== undefined) {
+    db.prepare("UPDATE settings SET value = ? WHERE key = 'pw_require_digit'").run(requireDigit ? '1' : '0');
+  }
+  if (requireSpecial !== undefined) {
+    db.prepare("UPDATE settings SET value = ? WHERE key = 'pw_require_special'").run(requireSpecial ? '1' : '0');
+  }
+
+  res.json(getPasswordRules());
 });
 
 export default router;
