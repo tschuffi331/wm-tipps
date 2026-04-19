@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { Avatar } from '../components/common/Avatar';
@@ -6,9 +7,15 @@ import { updateAvatar, deleteAvatar } from '../api/admin';
 import { changePassword } from '../api/settings';
 
 export function ProfilePage() {
-  const { user, updateUser } = useAuth();
+  const { user, logout, updateUser } = useAuth();
+  const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+
+  function handleLogout() {
+    logout();
+    navigate('/');
+  }
 
   const [pwOpen, setPwOpen] = useState(false);
   const [pwCurrent, setPwCurrent] = useState('');
@@ -106,6 +113,15 @@ export function ProfilePage() {
               Profilbild entfernen
             </button>
           )}
+        </div>
+
+        <div className="border-t pt-4">
+          <button
+            onClick={handleLogout}
+            className="w-full border border-red-300 text-red-500 font-medium py-2 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            Abmelden
+          </button>
         </div>
       </div>
 
