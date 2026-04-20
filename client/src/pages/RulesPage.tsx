@@ -45,6 +45,45 @@ export function RulesPage() {
         </div>
       </div>
 
+      {/* Einsatz & Gewinnverteilung */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+        <h2 className="text-lg font-bold text-wm-dark mb-4">Einsatz & Gewinnverteilung</h2>
+
+        <div className="flex items-center gap-3 mb-5 p-3 bg-wm-dark/5 rounded-xl">
+          <span className="text-2xl">💰</span>
+          <p className="text-sm text-gray-700">
+            Der Einsatz beträgt <span className="font-semibold">5 €</span> pro Person für das gesamte Turnier.
+          </p>
+        </div>
+
+        <div className="flex items-start gap-3 mb-5 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+          <span className="text-2xl">⚡</span>
+          <p className="text-sm text-gray-700">
+            Ab der <span className="font-semibold">K.O.-Runde</span> verdoppeln sich die Punkte —
+            ein exaktes Ergebnis gibt dann <span className="font-semibold text-wm-gold">6 Punkte</span>,
+            ein richtiger Ausgang <span className="font-semibold text-wm-gold">2 Punkte</span>.
+          </p>
+        </div>
+
+        <h3 className="text-sm font-bold text-gray-700 mb-3">Preisverteilung am Turnierende</h3>
+        <div className="space-y-2">
+          {[
+            { place: '🥇 1. Platz', pct: '40 %', color: 'bg-yellow-50 border-yellow-300' },
+            { place: '🥈 2. Platz', pct: '30 %', color: 'bg-gray-50 border-gray-300' },
+            { place: '🥉 3. Platz', pct: '15 %', color: 'bg-orange-50 border-orange-200' },
+            { place: '4. Platz',    pct: '15 %', color: 'bg-orange-50 border-orange-200' },
+          ].map(({ place, pct, color }) => (
+            <div key={place} className={`flex items-center justify-between px-4 py-2.5 rounded-lg border ${color}`}>
+              <span className="text-sm font-medium text-gray-800">{place}</span>
+              <span className="text-sm font-bold text-wm-dark">{pct}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 mt-3">
+          Der Gewinnbetrag wird auf Basis der tatsächlichen Teilnehmerzahl berechnet.
+        </p>
+      </div>
+
       {/* Tipps abgeben */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
         <h2 className="text-lg font-bold text-wm-dark mb-3">Tipps abgeben</h2>
