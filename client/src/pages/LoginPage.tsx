@@ -1,10 +1,11 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { login as apiLogin } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 
 export function LoginPage() {
+  useEffect(() => { document.title = 'Anmelden — WM Tipps 2026'; }, []);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
@@ -34,8 +35,9 @@ export function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Benutzername</label>
+            <label htmlFor="login-username" className="block text-sm font-medium text-gray-700 mb-1">Benutzername</label>
             <input
+              id="login-username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -46,8 +48,9 @@ export function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
+            <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
             <input
+              id="login-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

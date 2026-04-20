@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMatches } from '../api/matches';
 import { fetchMyTips } from '../api/tips';
@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import type { Tip } from '../types';
 
 export function TipsPage() {
+  useEffect(() => { document.title = 'Meine Tipps — WM Tipps 2026'; }, []);
   const { user } = useAuth();
   const [selectedGroup, setSelectedGroup] = useState('ALL');
 
@@ -59,7 +60,7 @@ export function TipsPage() {
 
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <p className="text-center text-gray-400 py-12">Keine Spiele gefunden.</p>
+          <p className="text-center text-gray-500 py-12">Keine Spiele gefunden.</p>
         ) : (
           filtered.map((match) => (
             <MatchCard
