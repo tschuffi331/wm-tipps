@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { fetchAdminMatches, setMatchResult } from '../api/admin';
@@ -9,6 +9,7 @@ import { de } from 'date-fns/locale';
 import type { Match, PasswordRules } from '../types';
 
 export function AdminPage() {
+  useEffect(() => { document.title = 'Admin — WM Tipps 2026'; }, []);
   const queryClient = useQueryClient();
   const { data: matches, isLoading } = useQuery({
     queryKey: ['adminMatches'],
@@ -94,7 +95,7 @@ export function AdminPage() {
                 onChange={e => setPwDraft({ ...(rules), minLength: Number(e.target.value) })}
                 className="w-20 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-wm-green"
               />
-              <span className="text-sm text-gray-400">Zeichen</span>
+              <span className="text-sm text-gray-500">Zeichen</span>
             </div>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -157,7 +158,7 @@ export function AdminPage() {
                     <div className="text-sm font-medium text-gray-800">
                       {match.home_team.flag_emoji} {match.home_team.name} — {match.away_team.name} {match.away_team.flag_emoji}
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-gray-500">
                       {format(kickoff, 'dd. MMM yyyy · HH:mm', { locale: de })} · {match.venue ?? ''}
                     </div>
                   </div>
@@ -177,7 +178,7 @@ export function AdminPage() {
                           onChange={(e) => setEditing({ ...editing, home: e.target.value })}
                           className="w-12 text-center border-2 border-wm-green rounded-lg py-1 font-bold"
                         />
-                        <span className="text-gray-400 font-bold">:</span>
+                        <span className="text-gray-500 font-bold">:</span>
                         <input
                           type="number" min={0} max={99}
                           value={editing.away}
@@ -193,7 +194,7 @@ export function AdminPage() {
                         </button>
                         <button
                           onClick={() => setEditing(null)}
-                          className="px-2 py-1.5 text-gray-400 hover:text-gray-600 text-xs"
+                          className="px-2 py-1.5 text-gray-500 hover:text-gray-600 text-xs"
                         >
                           Abbrechen
                         </button>

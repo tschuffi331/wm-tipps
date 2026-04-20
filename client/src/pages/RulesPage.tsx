@@ -1,4 +1,7 @@
+import { useEffect } from 'react';
+
 export function RulesPage() {
+  useEffect(() => { document.title = 'Regeln — WM Tipps 2026'; }, []);
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-wm-dark mb-6">Regeln & Punktesystem</h1>
@@ -27,7 +30,7 @@ export function RulesPage() {
             </div>
           </div>
           <div className="flex items-start gap-4 p-4 bg-gray-50 border border-gray-200 rounded-xl">
-            <span className="text-2xl font-bold text-gray-400 min-w-[2rem] text-center">0</span>
+            <span className="text-2xl font-bold text-gray-500 min-w-[2rem] text-center">0</span>
             <div>
               <p className="font-semibold text-gray-800">Falsch getippt</p>
               <p className="text-sm text-gray-600">
@@ -79,7 +82,7 @@ export function RulesPage() {
             </div>
           ))}
         </div>
-        <p className="text-xs text-gray-400 mt-3">
+        <p className="text-xs text-gray-500 mt-3">
           Der Gewinnbetrag wird auf Basis der tatsächlichen Teilnehmerzahl berechnet.
         </p>
       </div>

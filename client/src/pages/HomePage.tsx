@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMatches } from '../api/matches';
@@ -11,6 +12,7 @@ const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
 const TOURNAMENT_START = new Date('2026-06-11T21:00:00Z');
 
 export function HomePage() {
+  useEffect(() => { document.title = 'WM Tipps 2026 — FIFA Weltmeisterschaft 2026'; }, []);
   const { user } = useAuth();
   const { data: matches, isLoading } = useQuery({
     queryKey: ['matches'],
@@ -88,14 +90,14 @@ export function HomePage() {
             <div key={g} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-wm-dark">Gruppe {g}</h3>
-                <span className="text-xs text-gray-400">{gMatches.length} Spiele</span>
+                <span className="text-xs text-gray-500">{gMatches.length} Spiele</span>
               </div>
               <ul className="space-y-1.5">
                 {teams.map((t) => (
                   <li key={t.id} className="flex items-center gap-2 text-sm text-gray-700">
                     <span className="text-lg">{t.flag_emoji ?? ''}</span>
                     <span>{t.name}</span>
-                    <span className="text-gray-400 text-xs ml-auto">{t.short_name}</span>
+                    <span className="text-gray-500 text-xs ml-auto">{t.short_name}</span>
                   </li>
                 ))}
               </ul>
