@@ -36,14 +36,14 @@ router.post('/register', upload.single('avatar'), async (req: Request, res: Resp
 
   let avatarUrl: string | null = null;
   if (req.file) {
-    const resizedPath = req.file.path.replace(path.extname(req.file.path), '.jpg');
+    // Always write to a NEW file so sharp never reads and writes the same path
+    // (happens when the uploaded file is already a .jpg)
+    const outputFilename = `${path.basename(req.file.path, path.extname(req.file.path))}-r.jpg`;
+    const resizedPath = path.join(path.dirname(req.file.path), outputFilename);
     await sharp(req.file.path).resize(128, 128).jpeg({ quality: 85 }).toFile(resizedPath);
-    // Remove original if different filename
-    if (resizedPath !== req.file.path) {
-      const fs = await import('fs');
-      fs.unlinkSync(req.file.path);
-    }
-    avatarUrl = `/uploads/${path.basename(resizedPath)}`;
+    const { unlinkSync } = await import('fs');
+    unlinkSync(req.file.path); // always remove the original multer temp file
+    avatarUrl = `/uploads/${outputFilename}`;
   }
 
   const result = db.prepare(
