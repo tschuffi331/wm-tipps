@@ -33,6 +33,14 @@ export function LoginPage() {
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg p-8">
         <h1 className="text-2xl font-bold text-wm-dark mb-6 text-center">Anmelden</h1>
 
+        <div className="flex items-center gap-2.5 bg-wm-gold/10 border border-wm-gold/40 rounded-xl px-4 py-3 mb-5">
+          <span className="text-xl shrink-0" aria-hidden="true">⚽</span>
+          <p className="text-sm text-gray-700">
+            Die WM startet am <span className="font-semibold text-wm-dark">11. Juni 2026</span> —
+            jetzt registrieren und rechtzeitig tippen!
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="login-username" className="block text-sm font-medium text-gray-700 mb-1">Benutzername</label>
