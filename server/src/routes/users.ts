@@ -28,11 +28,14 @@ router.put('/me', requireAuth, upload.single('avatar'), async (req: AuthRequest,
     if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
   }
 
-  const resizedPath = req.file.path.replace(path.extname(req.file.path), '.jpg');
+  // Always write to a NEW file so sharp never reads and writes the same path
+  // (happens when the uploaded file is already a .jpg)
+  const outputFilename = `${path.basename(req.file.path, path.extname(req.file.path))}-r.jpg`;
+  const resizedPath = path.join(UPLOADS_DIR, outputFilename);
   await sharp(req.file.path).resize(128, 128).jpeg({ quality: 85 }).toFile(resizedPath);
-  if (resizedPath !== req.file.path) fs.unlinkSync(req.file.path);
+  fs.unlinkSync(req.file.path); // always remove the original multer temp file
 
-  const avatarUrl = `/uploads/${path.basename(resizedPath)}`;
+  const avatarUrl = `/uploads/${outputFilename}`;
   db.prepare('UPDATE users SET avatar_url = ? WHERE id = ?').run(avatarUrl, req.userId);
 
   res.json({ avatar_url: avatarUrl });
