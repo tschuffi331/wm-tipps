@@ -37,6 +37,7 @@ export function LoginPage() {
           <span className="text-xl shrink-0" aria-hidden="true">⚽</span>
           <p className="text-sm text-gray-700">
             Die WM startet am <span className="font-semibold text-wm-dark">11. Juni 2026</span> —
+
             Anmeldeschluss ist der <span className="font-semibold text-wm-dark">10. Juni 2026</span>.
           </p>
         </div>
