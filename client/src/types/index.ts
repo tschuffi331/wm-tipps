@@ -53,8 +53,12 @@ export interface AuthResponse {
   user: User;
 }
 
+export const WM_PHASES = ['Vorrunde', 'Achtelfinale', 'Viertelfinale', 'Halbfinale', 'Finale'] as const;
+export type WmPhase = typeof WM_PHASES[number];
+
 export interface PasswordRules {
   minLength: number;
   requireDigit: boolean;
   requireSpecial: boolean;
+  wmPhase: WmPhase;
 }

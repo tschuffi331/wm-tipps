@@ -71,17 +71,26 @@ router.get('/matches', requireAuth, requireAdmin, (_req: AuthRequest, res: Respo
   res.json(formatted);
 });
 
+const WM_PHASES = ['Vorrunde', 'Achtelfinale', 'Viertelfinale', 'Halbfinale', 'Finale'] as const;
+type WmPhase = typeof WM_PHASES[number];
+
+function getWmPhase(): WmPhase {
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'wm_phase'").get() as { value: string } | undefined;
+  return (row?.value ?? 'Vorrunde') as WmPhase;
+}
+
 // GET /api/admin/settings
 router.get('/settings', requireAuth, requireAdmin, (_req: AuthRequest, res: Response) => {
-  res.json(getPasswordRules());
+  res.json({ ...getPasswordRules(), wmPhase: getWmPhase() });
 });
 
 // PUT /api/admin/settings
 router.put('/settings', requireAuth, requireAdmin, (req: AuthRequest, res: Response) => {
-  const { minLength, requireDigit, requireSpecial } = req.body as {
+  const { minLength, requireDigit, requireSpecial, wmPhase } = req.body as {
     minLength?: number;
     requireDigit?: boolean;
     requireSpecial?: boolean;
+    wmPhase?: string;
   };
 
   if (minLength !== undefined) {
@@ -97,8 +106,15 @@ router.put('/settings', requireAuth, requireAdmin, (req: AuthRequest, res: Respo
   if (requireSpecial !== undefined) {
     db.prepare("UPDATE settings SET value = ? WHERE key = 'pw_require_special'").run(requireSpecial ? '1' : '0');
   }
+  if (wmPhase !== undefined) {
+    if (!(WM_PHASES as readonly string[]).includes(wmPhase)) {
+      res.status(400).json({ error: `wmPhase must be one of: ${WM_PHASES.join(', ')}` });
+      return;
+    }
+    db.prepare("UPDATE settings SET value = ? WHERE key = 'wm_phase'").run(wmPhase);
+  }
 
-  res.json(getPasswordRules());
+  res.json({ ...getPasswordRules(), wmPhase: getWmPhase() });
 });
 
 export default router;
