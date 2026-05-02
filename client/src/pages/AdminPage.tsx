@@ -6,7 +6,8 @@ import { getPasswordRules, updatePasswordRules } from '../api/settings';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import type { Match, PasswordRules } from '../types';
+import type { Match, PasswordRules, WmPhase } from '../types';
+import { WM_PHASES } from '../types';
 
 export function AdminPage() {
   useEffect(() => { document.title = 'Admin — WM Tipps 2026'; }, []);
@@ -81,6 +82,43 @@ export function AdminPage() {
       <p className="text-sm text-gray-500 mb-6">
         Klicke auf ein Spiel, um das Ergebnis einzutragen. Punkte werden sofort neu berechnet.
       </p>
+
+      {/* WM-Phase */}
+      {rules && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
+          <h2 className="text-base font-bold text-wm-dark mb-4">WM-Phase</h2>
+          <div className="flex items-center gap-4">
+            <label htmlFor="wm-phase" className="text-sm text-gray-700 w-44 shrink-0">Aktuelle Phase</label>
+            <select
+              id="wm-phase"
+              value={pwDraft?.wmPhase ?? rules.wmPhase}
+              onChange={e => setPwDraft({ ...(pwDraft ?? rules), wmPhase: e.target.value as WmPhase })}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-wm-green bg-white"
+            >
+              {WM_PHASES.map(phase => (
+                <option key={phase} value={phase}>{phase}</option>
+              ))}
+            </select>
+          </div>
+          {pwDraft?.wmPhase !== undefined && pwDraft.wmPhase !== rules.wmPhase && (
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => savePwRules.mutate(pwDraft!)}
+                disabled={savePwRules.isPending}
+                className="px-4 py-1.5 bg-wm-green text-white text-sm font-semibold rounded-lg hover:bg-green-800 disabled:opacity-50 transition-colors"
+              >
+                {savePwRules.isPending ? 'Speichern...' : 'Speichern'}
+              </button>
+              <button
+                onClick={() => setPwDraft(null)}
+                className="px-4 py-1.5 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Abbrechen
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Passwortregeln */}
       {rules && (
