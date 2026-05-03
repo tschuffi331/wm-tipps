@@ -1,5 +1,5 @@
 export interface Team {
-  id: number;
+  id: number | null;   // null for KO-round placeholder teams
   name: string;
   short_name: string;
   flag_emoji: string | null;
@@ -17,6 +17,8 @@ export interface Match {
   away_goals: number | null;
   home_team: Team;
   away_team: Team;
+  home_placeholder: string | null;
+  away_placeholder: string | null;
 }
 
 export interface Tip {

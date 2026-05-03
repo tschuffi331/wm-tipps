@@ -39,19 +39,22 @@ router.get('/matches', requireAuth, requireAdmin, (_req: AuthRequest, res: Respo
   const rows = db.prepare(`
     SELECT m.id, m.match_number, m.group_name, m.matchday, m.kickoff_utc, m.venue,
            m.home_goals, m.away_goals, m.status,
+           m.home_placeholder, m.away_placeholder,
            m.home_team_id, m.away_team_id,
            ht.name AS home_team_name, ht.short_name AS home_short, ht.flag_emoji AS home_flag,
            at.name AS away_team_name, at.short_name AS away_short, at.flag_emoji AS away_flag
     FROM   matches m
-    JOIN   teams ht ON ht.id = m.home_team_id
-    JOIN   teams at ON at.id = m.away_team_id
+    LEFT JOIN teams ht ON ht.id = m.home_team_id
+    LEFT JOIN teams at ON at.id = m.away_team_id
     ORDER BY m.kickoff_utc ASC
   `).all() as Array<{
     id: number; match_number: number; group_name: string; matchday: number;
-    kickoff_utc: string; venue: string; home_goals: number | null; away_goals: number | null;
-    status: string; home_team_id: number; away_team_id: number;
-    home_team_name: string; home_short: string; home_flag: string;
-    away_team_name: string; away_short: string; away_flag: string;
+    kickoff_utc: string; venue: string;
+    home_goals: number | null; away_goals: number | null; status: string;
+    home_placeholder: string | null; away_placeholder: string | null;
+    home_team_id: number | null; away_team_id: number | null;
+    home_team_name: string | null; home_short: string | null; home_flag: string | null;
+    away_team_name: string | null; away_short: string | null; away_flag: string | null;
   }>;
 
   const formatted = rows.map(r => ({
@@ -64,8 +67,14 @@ router.get('/matches', requireAuth, requireAdmin, (_req: AuthRequest, res: Respo
     home_goals: r.home_goals,
     away_goals: r.away_goals,
     status: r.status,
-    home_team: { id: r.home_team_id, name: r.home_team_name, short_name: r.home_short, flag_emoji: r.home_flag },
-    away_team: { id: r.away_team_id, name: r.away_team_name, short_name: r.away_short, flag_emoji: r.away_flag },
+    home_placeholder: r.home_placeholder,
+    away_placeholder: r.away_placeholder,
+    home_team: r.home_team_id != null
+      ? { id: r.home_team_id, name: r.home_team_name!, short_name: r.home_short!, flag_emoji: r.home_flag }
+      : { id: null, name: r.home_placeholder ?? 'TBD', short_name: 'TBD', flag_emoji: null },
+    away_team: r.away_team_id != null
+      ? { id: r.away_team_id, name: r.away_team_name!, short_name: r.away_short!, flag_emoji: r.away_flag }
+      : { id: null, name: r.away_placeholder ?? 'TBD', short_name: 'TBD', flag_emoji: null },
   }));
 
   res.json(formatted);

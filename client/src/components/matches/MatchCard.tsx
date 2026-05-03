@@ -13,12 +13,17 @@ interface MatchCardProps {
   tip?: Tip;
   onTipSaved: (tip: Tip) => void;
   isLoggedIn: boolean;
+  /** When true the card is grayed out and no tips can be entered */
+  readOnly?: boolean;
 }
 
-export function MatchCard({ match, tip, onTipSaved, isLoggedIn }: MatchCardProps) {
+const GROUP_STAGE = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+
+export function MatchCard({ match, tip, onTipSaved, isLoggedIn, readOnly = false }: MatchCardProps) {
   const kickoff    = new Date(match.kickoff_utc);
   const isPast     = kickoff <= new Date();
   const hasResult  = match.home_goals != null && match.away_goals != null;
+  const isKoMatch  = !GROUP_STAGE.includes(match.group_name);
 
   const [currentTip, setCurrentTip] = useState<Tip | undefined>(tip);
 
@@ -48,6 +53,11 @@ export function MatchCard({ match, tip, onTipSaved, isLoggedIn }: MatchCardProps
     }
   }
 
+  // Header badge: group stage shows group letter, KO rounds show phase name
+  const phaseBadge = isKoMatch
+    ? match.group_name
+    : `Gruppe ${match.group_name} · Spieltag ${match.matchday}`;
+
   const centerContent = (
     <>
       {hasResult ? (
@@ -76,6 +86,22 @@ export function MatchCard({ match, tip, onTipSaved, isLoggedIn }: MatchCardProps
             {isLoggedIn ? 'Kein Tipp abgegeben' : ''}
           </div>
         )
+      ) : readOnly ? (
+        /* Non-current phase — show existing tip or placeholder */
+        currentTip ? (
+          <div className="text-center">
+            <div className="text-xs text-gray-500 mb-0.5">Dein Tipp:</div>
+            <div className="flex items-center gap-1 justify-center font-semibold text-sm">
+              <span>{currentTip.home_goals_tip}</span>
+              <span className="text-gray-400" aria-hidden="true">:</span>
+              <span>{currentTip.away_goals_tip}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="text-xs text-gray-500 italic">
+            {isLoggedIn ? 'Noch nicht geöffnet' : ''}
+          </div>
+        )
       ) : isLoggedIn ? (
         <TipInput
           initialHome={currentTip?.home_goals_tip}
@@ -88,7 +114,7 @@ export function MatchCard({ match, tip, onTipSaved, isLoggedIn }: MatchCardProps
         </div>
       )}
 
-      {!isPast && isLoggedIn && (
+      {!isPast && !readOnly && isLoggedIn && (
         <CountdownTimer kickoffUtc={match.kickoff_utc} />
       )}
     </>
@@ -96,11 +122,11 @@ export function MatchCard({ match, tip, onTipSaved, isLoggedIn }: MatchCardProps
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
-      {/* Header: date + group */}
+      {/* Header: date + phase/group */}
       <div className="flex justify-between items-center mb-3 text-xs text-gray-500">
         <span>{format(kickoff, 'EEE, dd. MMM · HH:mm', { locale: de })} Uhr</span>
         <span className="bg-wm-dark text-white px-2 py-0.5 rounded-full text-xs font-medium">
-          Gruppe {match.group_name} · Spieltag {match.matchday}
+          {phaseBadge}
         </span>
       </div>
 

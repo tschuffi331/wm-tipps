@@ -1,5 +1,5 @@
 import api from './axiosInstance';
-import type { PasswordRules } from '../types';
+import type { PasswordRules, WmPhase } from '../types';
 
 export async function getPasswordRules(): Promise<PasswordRules> {
   const { data } = await api.get<PasswordRules>('/admin/settings');
@@ -13,4 +13,9 @@ export async function updatePasswordRules(rules: Partial<PasswordRules>): Promis
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
   await api.put('/users/me/password', { currentPassword, newPassword });
+}
+
+export async function getPublicPhase(): Promise<WmPhase> {
+  const { data } = await api.get<{ wmPhase: WmPhase }>('/settings/phase');
+  return data.wmPhase;
 }

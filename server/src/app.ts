@@ -10,6 +10,7 @@ import tipsRouter        from './routes/tips';
 import leaderboardRouter from './routes/leaderboard';
 import adminRouter       from './routes/admin';
 import usersRouter       from './routes/users';
+import settingsRouter    from './routes/settings';
 import { errorHandler }  from './middleware/errorHandler';
 
 dotenv.config();
@@ -43,6 +44,7 @@ app.use('/api/tips',        tipsRouter);
 app.use('/api/leaderboard', leaderboardRouter);
 app.use('/api/admin',       adminRouter);
 app.use('/api/users',       usersRouter);
+app.use('/api/settings',    settingsRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {
