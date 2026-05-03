@@ -164,5 +164,6 @@ Dieses Projekt nutzt einen PR-basierten Workflow — direkte Pushes auf `main` s
 git checkout -b feature/meine-aenderung
 # Änderungen vornehmen
 git push -u origin feature/meine-aenderung
+
 # Pull Request auf GitHub öffnen
 ```
