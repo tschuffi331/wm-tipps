@@ -95,11 +95,18 @@ export function TipsPage() {
           }}
           className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-wm-green"
         >
-          {WM_PHASES.map((phase) => (
-            <option key={phase} value={phase}>
-              {phase}{phase === adminPhase ? ' ✓' : ''}
-            </option>
-          ))}
+
+          {WM_PHASES.map((phase) => {
+            const adminIdx   = adminPhase ? WM_PHASES.indexOf(adminPhase) : 0;
+            const phaseIdx   = WM_PHASES.indexOf(phase);
+            const isFuture   = phaseIdx > adminIdx;
+            return (
+              <option key={phase} value={phase} disabled={isFuture}>
+                {phase === adminPhase ? `${phase} ✓` : isFuture ? `${phase} (noch nicht geöffnet)` : phase}
+              </option>
+            );
+          })}
+
         </select>
         {isReadOnly && (
           <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
