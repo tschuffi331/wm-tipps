@@ -6,16 +6,15 @@ GET  /api/auth/me        — JWT required
 """
 import io
 import os
-import re
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File
-from fastapi.responses import JSONResponse
 from jose import jwt
 from passlib.context import CryptContext
 from PIL import Image
+from pydantic import BaseModel
 
 from db.database import get_db
 from middleware.auth import require_auth, ALGORITHM
@@ -114,8 +113,6 @@ async def register(
 
 
 # ── POST /login ───────────────────────────────────────────────────────────────
-from pydantic import BaseModel
-
 class LoginBody(BaseModel):
     username: str
     password: str

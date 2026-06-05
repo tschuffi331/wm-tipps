@@ -19,5 +19,6 @@ COPY . .
 
 EXPOSE 3001
 
-# uvicorn is the ASGI server; --host 0.0.0.0 is required inside Docker
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3001"]
+# uvicorn is the ASGI server; --host 0.0.0.0 is required inside Docker.
+# Railway injects $PORT dynamically; fall back to 3001 for local Docker use.
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-3001}"]

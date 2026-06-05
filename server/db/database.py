@@ -29,8 +29,13 @@ def get_db() -> sqlite3.Connection:
 
 
 def run_migrations() -> None:
-    """Execute every *.sql file in db/migrations/ in alphabetical order."""
-    migration_dir = Path(__file__).parent / "migrations"
+    """Execute every *.sql file in src/db/migrations/ in alphabetical order.
+
+    SQL migration files are kept in the original src/db/migrations/ directory
+    (shared source of truth with the TypeScript server).  Once the TS source
+    is removed they can be moved to db/migrations/ and this path updated.
+    """
+    migration_dir = Path(__file__).parent.parent / "src" / "db" / "migrations"
     for sql_file in sorted(migration_dir.glob("*.sql")):
         _conn.executescript(sql_file.read_text(encoding="utf-8"))
     _conn.commit()
