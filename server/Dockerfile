@@ -1,25 +1,23 @@
-FROM node:20-slim
+# ── Python/FastAPI backend ────────────────────────────────────────────────────
+# Replaces the Node.js/Express/TypeScript build.
+FROM python:3.12-slim
 
-# Build deps for better-sqlite3 (native addon) and sharp
+# System deps for Pillow (JPEG/PNG decoding)
 RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
+    libjpeg-dev \
+    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install dependencies first (cached layer)
-COPY package*.json ./
-RUN npm ci
+# Install Python dependencies (cached layer)
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source and compile TypeScript
+# Copy application source
 COPY . .
-RUN npm run build
-
-# Copy SQL migration files (tsc only compiles .ts, not .sql)
-RUN cp -r src/db/migrations dist/db/migrations
 
 EXPOSE 3001
 
-CMD ["node", "dist/server.js"]
+# uvicorn is the ASGI server; --host 0.0.0.0 is required inside Docker
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3001"]
