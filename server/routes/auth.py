@@ -13,7 +13,7 @@ from pathlib import Path
 import bcrypt as _bcrypt
 
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File
-from jose import jwt
+import jwt
 from PIL import Image
 from pydantic import BaseModel
 
