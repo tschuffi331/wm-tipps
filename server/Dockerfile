@@ -9,18 +9,24 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Install Python dependencies.
-# NOTE: passlib is explicitly removed after installation because python-jose
-# (a transitive dependency path) can pull it in. Our code uses bcrypt and
-# PyJWT directly — passlib must not be present.
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt \
-    && pip uninstall -y passlib python-jose 2>/dev/null; \
-    echo "=== installed packages ===" \
-    && pip list | grep -iE "bcrypt|jwt|passlib|jose"
-
-# Copy application source
+# Copy ALL source first.
+# This ensures any code change (auth.py, main.py, …) invalidates every
+# subsequent layer — including the pip-install step — so Railway can never
+# serve a stale image that still has the old passlib-based code.
 COPY . .
+
+# Install deps, then hard-remove passlib/python-jose if anything dragged them
+# in as a transitive dependency.  Fail the build immediately if passlib is
+# still importable so the problem surfaces at build time, not at runtime.
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip uninstall -y passlib python-jose 2>/dev/null || true \
+    && if python -c "import passlib" 2>/dev/null; then \
+         echo "BUILD FAILED: passlib is still present after uninstall"; \
+         pip show passlib; \
+         exit 1; \
+       fi \
+    && echo "OK: passlib absent" \
+    && pip list | grep -iE "bcrypt|pyjwt|passlib|jose"
 
 EXPOSE 3001
 
