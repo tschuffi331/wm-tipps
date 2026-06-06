@@ -8,8 +8,17 @@ interface AvatarProps {
 }
 
 export function Avatar({ username, avatarUrl, size = 40, className = '' }: AvatarProps) {
+  // Build the uploads base URL and ensure https:// on HTTPS pages.
+  const _base = (import.meta.env.VITE_API_URL ?? '').replace('/api', '');
+  const _safeBase =
+    typeof window !== 'undefined' &&
+    window.location.protocol === 'https:' &&
+    _base.startsWith('http://')
+      ? _base.replace(/^http:\/\//, 'https://')
+      : _base;
+
   const src = avatarUrl?.startsWith('/uploads')
-    ? `${import.meta.env.VITE_API_URL?.replace('/api', '') ?? ''}${avatarUrl}`
+    ? `${_safeBase}${avatarUrl}`
     : avatarUrl ??
       `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(username)}&backgroundColor=${BG_COLORS}`;
 

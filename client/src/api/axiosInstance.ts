@@ -1,6 +1,14 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+// Upgrade http:// → https:// when the page itself is served over HTTPS,
+// so a misconfigured VITE_API_URL secret never causes a mixed-content block.
+const _rawUrl = import.meta.env.VITE_API_URL || '/api';
+const API_URL =
+  typeof window !== 'undefined' &&
+  window.location.protocol === 'https:' &&
+  _rawUrl.startsWith('http://')
+    ? _rawUrl.replace(/^http:\/\//, 'https://')
+    : _rawUrl;
 
 const api = axios.create({ baseURL: API_URL });
 

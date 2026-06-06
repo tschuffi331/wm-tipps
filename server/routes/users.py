@@ -9,8 +9,9 @@ import os
 import uuid
 from pathlib import Path
 
+import bcrypt as _bcrypt
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from passlib.context import CryptContext
 from PIL import Image
 from pydantic import BaseModel
 
@@ -20,7 +21,14 @@ from services.avatar_service import get_dicebear_url
 from utils.password_validator import get_password_rules, validate_password
 
 router = APIRouter()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def _hash_password(plain: str) -> str:
+    return _bcrypt.hashpw(plain.encode(), _bcrypt.gensalt(rounds=12)).decode()
+
+
+def _verify_password(plain: str, hashed: str) -> bool:
+    return _bcrypt.checkpw(plain.encode(), hashed.encode())
 
 UPLOADS_DIR = os.getenv("UPLOADS_DIR", "./uploads")
 _ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp", "image/gif"}
@@ -82,7 +90,7 @@ async def change_password(body: PasswordBody, auth: dict = Depends(require_auth)
     ).fetchone()
     if not user:
         raise HTTPException(404, "User not found")
-    if not pwd_context.verify(body.currentPassword, user["password"]):
+    if not _verify_password(body.currentPassword, user["password"]):
         raise HTTPException(401, "Aktuelles Passwort ist falsch")
 
     err = validate_password(body.newPassword, get_password_rules())
@@ -91,7 +99,7 @@ async def change_password(body: PasswordBody, auth: dict = Depends(require_auth)
 
     conn.execute(
         "UPDATE users SET password = ? WHERE id = ?",
-        (pwd_context.hash(body.newPassword), auth["user_id"]),
+        (_hash_password(body.newPassword), auth["user_id"]),
     )
     conn.commit()
     return {"message": "Passwort erfolgreich geändert"}

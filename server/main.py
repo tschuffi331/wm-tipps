@@ -39,9 +39,15 @@ app = FastAPI(
 )
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
+# Set ALLOWED_ORIGINS in Railway as a comma-separated list, e.g.:
+#   https://tschuffi331.github.io,http://localhost:5173
 _allowed_origins = [
     o.strip()
-    for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+    for o in os.getenv(
+        "ALLOWED_ORIGINS",
+        "https://tschuffi331.github.io,http://localhost:5173",
+    ).split(",")
+    if o.strip()
 ]
 app.add_middleware(
     CORSMiddleware,

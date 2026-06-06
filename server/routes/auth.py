@@ -10,9 +10,10 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import bcrypt as _bcrypt
+
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File
-from jose import jwt
-from passlib.context import CryptContext
+import jwt
 from PIL import Image
 from pydantic import BaseModel
 
@@ -22,7 +23,14 @@ from services.avatar_service import get_dicebear_url
 from utils.password_validator import get_password_rules, validate_password
 
 router = APIRouter()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def _hash_password(plain: str) -> str:
+    return _bcrypt.hashpw(plain.encode(), _bcrypt.gensalt(rounds=12)).decode()
+
+
+def _verify_password(plain: str, hashed: str) -> bool:
+    return _bcrypt.checkpw(plain.encode(), hashed.encode())
 
 JWT_SECRET = os.getenv("JWT_SECRET", "")
 UPLOADS_DIR = os.getenv("UPLOADS_DIR", "./uploads")
@@ -88,7 +96,7 @@ async def register(
     if conn.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone():
         raise HTTPException(409, "Username already taken")
 
-    pw_hash = pwd_context.hash(password)
+    pw_hash = _hash_password(password)
 
     avatar_url: str | None = None
     if avatar and avatar.filename:
@@ -126,7 +134,7 @@ async def login(body: LoginBody):
         (body.username,),
     ).fetchone()
 
-    if not user or not pwd_context.verify(body.password, user["password"]):
+    if not user or not _verify_password(body.password, user["password"]):
         raise HTTPException(401, "Invalid username or password")
 
     return {

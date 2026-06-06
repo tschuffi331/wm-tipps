@@ -1,7 +1,7 @@
 """JWT authentication dependency — equivalent of auth.ts + isAdmin.ts."""
 import os
+import jwt
 from fastapi import Header, HTTPException, Depends
-from jose import jwt, JWTError
 
 JWT_SECRET = os.getenv("JWT_SECRET", "")
 ALGORITHM = "HS256"
@@ -15,7 +15,7 @@ def require_auth(authorization: str | None = Header(default=None)) -> dict:
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
         return {"user_id": int(payload["userId"]), "role": payload["role"]}
-    except (JWTError, KeyError, ValueError):
+    except (jwt.PyJWTError, KeyError, ValueError):
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
