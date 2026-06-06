@@ -34,28 +34,34 @@ export function TipInput({ initialHome, initialAway, onSave, disabled = false }:
         min={0}
         max={99}
         value={home}
+        aria-label="Heimtore"
         onChange={(e) => setHome(e.target.value === '' ? '' : Number(e.target.value))}
         disabled={disabled || saving}
         className="w-12 text-center border-2 border-gray-300 rounded-lg py-1 text-lg font-bold
-                   focus:border-wm-green focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
+                   focus:border-wm-green focus:outline-none focus-visible:ring-2 focus-visible:ring-wm-green
+                   disabled:bg-gray-100 disabled:text-gray-400"
       />
-      <span className="text-gray-400 font-bold">:</span>
+      <span className="text-gray-400 font-bold" aria-hidden="true">:</span>
       <input
         type="number"
         min={0}
         max={99}
         value={away}
+        aria-label="Auswärtstore"
         onChange={(e) => setAway(e.target.value === '' ? '' : Number(e.target.value))}
         disabled={disabled || saving}
         className="w-12 text-center border-2 border-gray-300 rounded-lg py-1 text-lg font-bold
-                   focus:border-wm-green focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
+                   focus:border-wm-green focus:outline-none focus-visible:ring-2 focus-visible:ring-wm-green
+                   disabled:bg-gray-100 disabled:text-gray-400"
       />
       {!disabled && (
         <button
           onClick={handleSave}
           disabled={!isValid || !isDirty || saving}
           className="ml-1 px-3 py-1.5 bg-wm-green text-white text-xs font-semibold rounded-lg
-                     hover:bg-green-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                     hover:bg-green-800 disabled:opacity-40 disabled:cursor-not-allowed
+                     focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-wm-green
+                     transition-colors"
         >
           {saving ? '...' : 'Speichern'}
         </button>

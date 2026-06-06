@@ -1,4 +1,4 @@
-import { useState, FormEvent, useRef } from 'react';
+import { useState, FormEvent, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { register as apiRegister } from '../api/auth';
@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { Avatar } from '../components/common/Avatar';
 
 export function RegisterPage() {
+  useEffect(() => { document.title = 'Registrieren — WM Tipps 2026'; }, []);
   const [username, setUsername]   = useState('');
   const [password, setPassword]   = useState('');
   const [password2, setPassword2] = useState('');
@@ -75,15 +76,16 @@ export function RegisterPage() {
               onChange={handleFileChange}
             />
             {!avatarFile && (
-              <p className="text-xs text-gray-400 text-center">
+              <p className="text-xs text-gray-500 text-center">
                 Kein Bild → automatisch generierter Avatar
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Benutzername</label>
+            <label htmlFor="reg-username" className="block text-sm font-medium text-gray-700 mb-1">Benutzername</label>
             <input
+              id="reg-username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -95,8 +97,9 @@ export function RegisterPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
+            <label htmlFor="reg-password" className="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
             <input
+              id="reg-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -107,8 +110,9 @@ export function RegisterPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Passwort wiederholen</label>
+            <label htmlFor="reg-password2" className="block text-sm font-medium text-gray-700 mb-1">Passwort wiederholen</label>
             <input
+              id="reg-password2"
               type="password"
               value={password2}
               onChange={(e) => setPassword2(e.target.value)}

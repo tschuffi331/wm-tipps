@@ -1,10 +1,11 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { login as apiLogin } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 
 export function LoginPage() {
+  useEffect(() => { document.title = 'Anmelden — WM Tipps 2026'; }, []);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
@@ -32,10 +33,20 @@ export function LoginPage() {
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg p-8">
         <h1 className="text-2xl font-bold text-wm-dark mb-6 text-center">Anmelden</h1>
 
+        <div className="flex items-center gap-2.5 bg-wm-gold/10 border border-wm-gold/40 rounded-xl px-4 py-3 mb-5">
+          <span className="text-xl shrink-0" aria-hidden="true">⚽</span>
+          <p className="text-sm text-gray-700">
+            Die WM startet am <span className="font-semibold text-wm-dark">11. Juni 2026</span> —
+
+            Anmeldeschluss ist der <span className="font-semibold text-wm-dark">10. Juni 2026</span>.
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Benutzername</label>
+            <label htmlFor="login-username" className="block text-sm font-medium text-gray-700 mb-1">Benutzername</label>
             <input
+              id="login-username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -46,8 +57,9 @@ export function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
+            <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
             <input
+              id="login-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
