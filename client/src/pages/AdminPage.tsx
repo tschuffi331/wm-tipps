@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { fetchAdminMatches, setMatchResult } from '../api/admin';
@@ -6,9 +6,11 @@ import { getPasswordRules, updatePasswordRules } from '../api/settings';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import type { Match, PasswordRules } from '../types';
+import type { Match, PasswordRules, WmPhase } from '../types';
+import { WM_PHASES } from '../types';
 
 export function AdminPage() {
+  useEffect(() => { document.title = 'Admin — WM Tipps 2026'; }, []);
   const queryClient = useQueryClient();
   const { data: matches, isLoading } = useQuery({
     queryKey: ['adminMatches'],
@@ -81,6 +83,43 @@ export function AdminPage() {
         Klicke auf ein Spiel, um das Ergebnis einzutragen. Punkte werden sofort neu berechnet.
       </p>
 
+      {/* WM-Phase */}
+      {rules && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
+          <h2 className="text-base font-bold text-wm-dark mb-4">WM-Phase</h2>
+          <div className="flex items-center gap-4">
+            <label htmlFor="wm-phase" className="text-sm text-gray-700 w-44 shrink-0">Aktuelle Phase</label>
+            <select
+              id="wm-phase"
+              value={pwDraft?.wmPhase ?? rules.wmPhase}
+              onChange={e => setPwDraft({ ...(pwDraft ?? rules), wmPhase: e.target.value as WmPhase })}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-wm-green bg-white"
+            >
+              {WM_PHASES.map(phase => (
+                <option key={phase} value={phase}>{phase}</option>
+              ))}
+            </select>
+          </div>
+          {pwDraft?.wmPhase !== undefined && pwDraft.wmPhase !== rules.wmPhase && (
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => savePwRules.mutate(pwDraft!)}
+                disabled={savePwRules.isPending}
+                className="px-4 py-1.5 bg-wm-green text-white text-sm font-semibold rounded-lg hover:bg-green-800 disabled:opacity-50 transition-colors"
+              >
+                {savePwRules.isPending ? 'Speichern...' : 'Speichern'}
+              </button>
+              <button
+                onClick={() => setPwDraft(null)}
+                className="px-4 py-1.5 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Abbrechen
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Passwortregeln */}
       {rules && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-8">
@@ -94,7 +133,7 @@ export function AdminPage() {
                 onChange={e => setPwDraft({ ...(rules), minLength: Number(e.target.value) })}
                 className="w-20 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-wm-green"
               />
-              <span className="text-sm text-gray-400">Zeichen</span>
+              <span className="text-sm text-gray-500">Zeichen</span>
             </div>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -157,7 +196,7 @@ export function AdminPage() {
                     <div className="text-sm font-medium text-gray-800">
                       {match.home_team.flag_emoji} {match.home_team.name} — {match.away_team.name} {match.away_team.flag_emoji}
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-gray-500">
                       {format(kickoff, 'dd. MMM yyyy · HH:mm', { locale: de })} · {match.venue ?? ''}
                     </div>
                   </div>
@@ -177,7 +216,7 @@ export function AdminPage() {
                           onChange={(e) => setEditing({ ...editing, home: e.target.value })}
                           className="w-12 text-center border-2 border-wm-green rounded-lg py-1 font-bold"
                         />
-                        <span className="text-gray-400 font-bold">:</span>
+                        <span className="text-gray-500 font-bold">:</span>
                         <input
                           type="number" min={0} max={99}
                           value={editing.away}
@@ -193,7 +232,7 @@ export function AdminPage() {
                         </button>
                         <button
                           onClick={() => setEditing(null)}
-                          className="px-2 py-1.5 text-gray-400 hover:text-gray-600 text-xs"
+                          className="px-2 py-1.5 text-gray-500 hover:text-gray-600 text-xs"
                         >
                           Abbrechen
                         </button>

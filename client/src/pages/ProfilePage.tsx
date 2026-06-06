@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,7 @@ import { updateAvatar, deleteAvatar } from '../api/admin';
 import { changePassword } from '../api/settings';
 
 export function ProfilePage() {
+  useEffect(() => { document.title = 'Mein Profil — WM Tipps 2026'; }, []);
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -132,39 +133,42 @@ export function ProfilePage() {
           className="w-full flex items-center justify-between px-6 py-4 text-left"
         >
           <span className="font-semibold text-gray-800">Passwort ändern</span>
-          <span className="text-gray-400 text-lg">{pwOpen ? '▲' : '▼'}</span>
+          <span className="text-gray-500 text-lg" aria-hidden="true">{pwOpen ? '▲' : '▼'}</span>
         </button>
 
         {pwOpen && (
           <form onSubmit={handleChangePassword} className="px-6 pb-6 space-y-3 border-t pt-4">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Aktuelles Passwort</label>
+              <label htmlFor="pw-current" className="block text-sm text-gray-600 mb-1">Aktuelles Passwort</label>
               <input
+                id="pw-current"
                 type="password"
                 value={pwCurrent}
                 onChange={e => setPwCurrent(e.target.value)}
                 required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-wm-green"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-wm-green focus-visible:ring-2 focus-visible:ring-wm-green"
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Neues Passwort</label>
+              <label htmlFor="pw-new" className="block text-sm text-gray-600 mb-1">Neues Passwort</label>
               <input
+                id="pw-new"
                 type="password"
                 value={pwNew}
                 onChange={e => setPwNew(e.target.value)}
                 required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-wm-green"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-wm-green focus-visible:ring-2 focus-visible:ring-wm-green"
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Neues Passwort bestätigen</label>
+              <label htmlFor="pw-confirm" className="block text-sm text-gray-600 mb-1">Neues Passwort bestätigen</label>
               <input
+                id="pw-confirm"
                 type="password"
                 value={pwConfirm}
                 onChange={e => setPwConfirm(e.target.value)}
                 required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-wm-green"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-wm-green focus-visible:ring-2 focus-visible:ring-wm-green"
               />
             </div>
             <button
