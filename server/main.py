@@ -16,6 +16,7 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from db.database import run_migrations
 from db.seeds.teams import seed_teams
@@ -37,6 +38,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# Trust X-Forwarded-Proto from Railway's SSL terminator so any Starlette
+# 307 redirects (e.g. trailing-slash normalisation) use https://, not http://.
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
 # Set ALLOWED_ORIGINS in Railway as a comma-separated list, e.g.:

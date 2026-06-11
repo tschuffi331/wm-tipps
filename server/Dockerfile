@@ -30,5 +30,6 @@ RUN pip install --no-cache-dir -r requirements.txt \
 
 EXPOSE 3001
 
-# Railway injects $PORT dynamically; fall back to 3001 for local Docker use.
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-3001}"]
+# --proxy-headers + --forwarded-allow-ips=* tell uvicorn to trust Railway's
+# X-Forwarded-Proto header so https:// is preserved in any 307 redirects.
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-3001} --proxy-headers --forwarded-allow-ips='*'"]
