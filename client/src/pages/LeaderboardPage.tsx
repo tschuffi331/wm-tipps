@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchLeaderboard } from '../api/leaderboard';
 import { Avatar } from '../components/common/Avatar';
@@ -5,6 +6,7 @@ import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
 
 export function LeaderboardPage() {
+  useEffect(() => { document.title = 'Rangliste — WM Tipps 2026'; }, []);
   const { user } = useAuth();
   const { data, isLoading } = useQuery({
     queryKey: ['leaderboard'],
@@ -16,7 +18,7 @@ export function LeaderboardPage() {
 
   const rankColors: Record<number, string> = {
     1: 'text-yellow-500',
-    2: 'text-gray-400',
+    2: 'text-gray-500',
     3: 'text-amber-600',
   };
 
@@ -25,7 +27,7 @@ export function LeaderboardPage() {
       <h1 className="text-2xl font-bold text-wm-dark mb-6">Rangliste</h1>
 
       {!data?.length ? (
-        <p className="text-center text-gray-400 py-12">Noch keine Einträge.</p>
+        <p className="text-center text-gray-500 py-12">Noch keine Einträge.</p>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <table className="w-full">
@@ -49,7 +51,7 @@ export function LeaderboardPage() {
                       isMe ? 'bg-green-50' : i % 2 === 0 ? '' : 'bg-gray-50/30'
                     }`}
                   >
-                    <td className={`px-4 py-3 font-bold text-lg ${rankColors[entry.rank] ?? 'text-gray-400'}`}>
+                    <td className={`px-4 py-3 font-bold text-lg ${rankColors[entry.rank] ?? 'text-gray-500'}`}>
                       {entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : entry.rank}
                     </td>
                     <td className="px-4 py-3">

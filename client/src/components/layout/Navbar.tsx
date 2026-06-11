@@ -64,6 +64,8 @@ export function Navbar() {
             onClick={() => setOpen(o => !o)}
             className="p-1.5 rounded-md text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
             aria-label="Menü"
+            aria-expanded={open}
+            aria-controls="mobile-menu"
           >
             {open ? (
               <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -80,7 +82,7 @@ export function Navbar() {
 
       {/* Mobile dropdown */}
       {open && (
-        <div className="sm:hidden bg-wm-dark border-t border-white/10 px-4 py-3 flex flex-col gap-3 text-sm">
+        <div id="mobile-menu" className="sm:hidden bg-wm-dark border-t border-white/10 px-4 py-3 flex flex-col gap-3 text-sm">
           <NavLink to="/leaderboard" onClick={close} className={linkClass}>Rangliste</NavLink>
           <NavLink to="/rules"       onClick={close} className={linkClass}>Regeln</NavLink>
 
