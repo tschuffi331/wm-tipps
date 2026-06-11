@@ -26,9 +26,9 @@ def _short_placeholder(text: str | None) -> str:
     m = re.search(r"Verlierer Spiel (\d+)", text)
     if m:
         return f"V.{m.group(1)}"              # "Verlierer Spiel 85" → "V.85"
-    m = re.search(r"Bester 3\. \((\d)\)", text)
+    m = re.search(r"Bester 3\. \(([A-Z0-9/]+)\)", text)
     if m:
-        return f"B3.{m.group(1)}"             # "Bester 3. (1)" → "B3.1"
+        return "B3."                           # "Bester 3. (A/B/C)" or "(1)" → "B3."
     return text[:5]
 
 

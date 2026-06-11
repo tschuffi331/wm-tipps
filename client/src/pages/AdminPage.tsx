@@ -70,10 +70,20 @@ export function AdminPage() {
 
   if (isLoading) return <LoadingSpinner message="Spiele werden geladen..." />;
 
+  const GROUP_STAGE = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+  const KO_PHASES   = ['Sechzehntelfinale','Achtelfinale','Viertelfinale','Halbfinale','Finale'];
+
   const grouped: Record<string, Match[]> = {};
   for (const m of matches ?? []) {
     if (!grouped[m.group_name]) grouped[m.group_name] = [];
     grouped[m.group_name].push(m);
+  }
+
+  function sectionSortKey(key: string): string {
+    const gi = GROUP_STAGE.indexOf(key);
+    if (gi >= 0) return `0_${gi.toString().padStart(2, '0')}`;
+    const ki = KO_PHASES.indexOf(key);
+    return ki >= 0 ? `1_${ki}` : `2_${key}`;
   }
 
   return (
@@ -176,10 +186,12 @@ export function AdminPage() {
 
       {/* Spielergebnisse */}
 
-      {Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([group, groupMatches]) => (
+      {Object.entries(grouped).sort(([a], [b]) => sectionSortKey(a).localeCompare(sectionSortKey(b))).map(([group, groupMatches]) => (
         <div key={group} className="mb-8">
           <h2 className="text-lg font-bold text-wm-dark mb-3 flex items-center gap-2">
-            <span className="bg-wm-dark text-wm-gold px-2.5 py-0.5 rounded-md text-sm">Gruppe {group}</span>
+            <span className="bg-wm-dark text-wm-gold px-2.5 py-0.5 rounded-md text-sm">
+              {GROUP_STAGE.includes(group) ? `Gruppe ${group}` : group}
+            </span>
           </h2>
           <div className="space-y-2">
             {groupMatches.map((match) => {

@@ -109,7 +109,7 @@ export function RulesPage() {
         <p className="text-sm text-green-100 leading-relaxed">
           Frontend: React + TypeScript + Tailwind CSS, gehostet auf GitHub Pages.
           <br />
-          Backend: Node.js + Express + SQLite, gehostet auf Railway.
+          Backend: Python + FastAPI + SQLite, gehostet auf Railway.
         </p>
       </div>
     </div>
