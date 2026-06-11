@@ -15,7 +15,7 @@ from utils.password_validator import get_password_rules
 
 router = APIRouter()
 
-WM_PHASES = ["Vorrunde", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale"]
+WM_PHASES = ["Vorrunde", "Sechzehntelfinale", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale"]
 
 
 def _get_wm_phase() -> str:
