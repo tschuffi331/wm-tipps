@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -21,6 +21,17 @@ const GROUP_STAGE = ['A','B','C','D','E','F','G','H','I','J','K','L'];
 
 export function MatchCard({ match, tip, onTipSaved, isLoggedIn, readOnly = false }: MatchCardProps) {
   const kickoff    = new Date(match.kickoff_utc);
+
+  // Force a re-render exactly when the match starts so isPast flips reliably
+  // even if the user keeps the page open across kickoff.
+  const [, forceUpdate] = useState(0);
+  useEffect(() => {
+    const ms = kickoff.getTime() - Date.now();
+    if (ms <= 0) return;
+    const id = setTimeout(() => forceUpdate(n => n + 1), ms + 500);
+    return () => clearTimeout(id);
+  }, [kickoff]);
+
   const isPast     = kickoff <= new Date();
   const hasResult  = match.home_goals != null && match.away_goals != null;
   const isKoMatch  = !GROUP_STAGE.includes(match.group_name);

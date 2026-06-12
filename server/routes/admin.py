@@ -102,6 +102,20 @@ def admin_matches(auth: dict = Depends(require_admin)):
     return [_fmt(r) for r in rows]
 
 
+# ── DELETE /api/admin/users/:username ────────────────────────────────────────
+@router.delete("/users/{username}")
+def delete_user(username: str, auth: dict = Depends(require_admin)):
+    conn = get_db()
+    row = conn.execute("SELECT id FROM users WHERE username = ? COLLATE NOCASE", (username,)).fetchone()
+    if not row:
+        raise HTTPException(404, f"User '{username}' not found")
+    uid = row["id"]
+    conn.execute("DELETE FROM tips WHERE user_id = ?", (uid,))
+    conn.execute("DELETE FROM users WHERE id = ?", (uid,))
+    conn.commit()
+    return {"message": f"User '{username}' and their tips deleted"}
+
+
 # ── GET /api/admin/settings ───────────────────────────────────────────────────
 @router.get("/settings")
 def get_settings(auth: dict = Depends(require_admin)):

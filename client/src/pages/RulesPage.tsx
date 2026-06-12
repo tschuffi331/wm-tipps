@@ -102,7 +102,9 @@ export function RulesPage() {
       <div className="bg-gradient-to-r from-wm-dark to-wm-green rounded-2xl text-white p-6">
         <h2 className="text-lg font-bold mb-3">Über diese Seite</h2>
         <p className="text-sm text-green-100 leading-relaxed mb-3">
-          Diese Tippspiel-Plattform wurde vollständig von{' '}
+          Diese Tippspiel-Plattform wurde von{' '}
+          <span className="font-semibold text-white">Claus Ilmberger</span>{' '}
+          mit Hilfe von{' '}
           <span className="font-semibold text-wm-gold">Claude Code</span> entwickelt —
           dem KI-Coding-Assistenten von Anthropic.
         </p>
