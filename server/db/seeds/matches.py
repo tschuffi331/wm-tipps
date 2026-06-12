@@ -29,7 +29,7 @@ _MATCHES = [
     (17, "C", 3, "Scotland",     "Brazil",                 "2026-06-24T22:00:00Z", "Hard Rock Stadium, Miami"),
     (18, "C", 3, "Morocco",      "Haiti",                  "2026-06-24T22:00:00Z", "Mercedes-Benz Stadium, Atlanta"),
     # GROUP D: USA · Australia · Paraguay · Turkey
-    (19, "D", 1, "USA",          "Paraguay",               "2026-06-12T01:00:00Z", "SoFi Stadium, Los Angeles"),
+    (19, "D", 1, "USA",          "Paraguay",               "2026-06-13T01:00:00Z", "SoFi Stadium, Los Angeles"),
     (20, "D", 1, "Australia",    "Turkey",                 "2026-06-13T04:00:00Z", "BC Place, Vancouver"),
     (21, "D", 2, "USA",          "Australia",              "2026-06-19T19:00:00Z", "Lumen Field, Seattle"),
     (22, "D", 2, "Turkey",       "Paraguay",               "2026-06-20T03:00:00Z", "Levi's Stadium, San Francisco"),
