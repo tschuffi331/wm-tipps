@@ -8,23 +8,19 @@ interface TipInputProps {
 }
 
 export function TipInput({ initialHome, initialAway, onSave, disabled = false }: TipInputProps) {
-  const [home, setHome] = useState(initialHome ?? '');
-  const [away, setAway] = useState(initialAway ?? '');
+  const [home, setHome] = useState<number>(initialHome ?? 0);
+  const [away, setAway] = useState<number>(initialAway ?? 0);
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
-    const h = Number(home);
-    const a = Number(away);
-    if (!Number.isInteger(h) || h < 0 || !Number.isInteger(a) || a < 0) return;
+    if (home < 0 || away < 0 || !Number.isInteger(home) || !Number.isInteger(away)) return;
     setSaving(true);
     try {
-      await onSave(h, a);
+      await onSave(home, away);
     } finally {
       setSaving(false);
     }
   }
-
-  const isValid = home !== '' && away !== '' && Number(home) >= 0 && Number(away) >= 0;
 
   return (
     <div className="flex items-center gap-2">
@@ -34,7 +30,7 @@ export function TipInput({ initialHome, initialAway, onSave, disabled = false }:
         max={99}
         value={home}
         aria-label="Heimtore"
-        onChange={(e) => setHome(e.target.value === '' ? '' : Number(e.target.value))}
+        onChange={(e) => setHome(e.target.value === '' ? 0 : Number(e.target.value))}
         disabled={disabled || saving}
         className="w-12 text-center border-2 border-gray-300 rounded-lg py-1 text-lg font-bold
                    focus:border-wm-green focus:outline-none focus-visible:ring-2 focus-visible:ring-wm-green
@@ -47,7 +43,7 @@ export function TipInput({ initialHome, initialAway, onSave, disabled = false }:
         max={99}
         value={away}
         aria-label="Auswärtstore"
-        onChange={(e) => setAway(e.target.value === '' ? '' : Number(e.target.value))}
+        onChange={(e) => setAway(e.target.value === '' ? 0 : Number(e.target.value))}
         disabled={disabled || saving}
         className="w-12 text-center border-2 border-gray-300 rounded-lg py-1 text-lg font-bold
                    focus:border-wm-green focus:outline-none focus-visible:ring-2 focus-visible:ring-wm-green
@@ -56,7 +52,7 @@ export function TipInput({ initialHome, initialAway, onSave, disabled = false }:
       {!disabled && (
         <button
           onClick={handleSave}
-          disabled={!isValid || saving}
+          disabled={saving}
           className="ml-1 px-3 py-1.5 bg-wm-green text-white text-xs font-semibold rounded-lg
                      hover:bg-green-800 disabled:opacity-40 disabled:cursor-not-allowed
                      focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-wm-green
