@@ -25,7 +25,6 @@ export function TipInput({ initialHome, initialAway, onSave, disabled = false }:
   }
 
   const isValid = home !== '' && away !== '' && Number(home) >= 0 && Number(away) >= 0;
-  const isDirty = Number(home) !== initialHome || Number(away) !== initialAway;
 
   return (
     <div className="flex items-center gap-2">
@@ -57,7 +56,7 @@ export function TipInput({ initialHome, initialAway, onSave, disabled = false }:
       {!disabled && (
         <button
           onClick={handleSave}
-          disabled={!isValid || !isDirty || saving}
+          disabled={!isValid || saving}
           className="ml-1 px-3 py-1.5 bg-wm-green text-white text-xs font-semibold rounded-lg
                      hover:bg-green-800 disabled:opacity-40 disabled:cursor-not-allowed
                      focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-wm-green

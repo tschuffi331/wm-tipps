@@ -56,8 +56,9 @@ export function TipsPage() {
   // Effective phase: user selection overrides admin default
   const currentPhase: WmPhase = userPhase ?? adminPhase ?? 'Vorrunde';
 
-  // Matches are read-only (grayed) when viewing a phase ≠ admin's current phase
-  const isReadOnly = adminPhase !== undefined && currentPhase !== adminPhase;
+  // Info-only: whether the user is viewing a phase that isn't the admin's active one.
+  // We no longer lock tipping based on phase — only kickoff time (isPast in MatchCard) controls that.
+  const isViewingNonActivePhase = adminPhase !== undefined && currentPhase !== adminPhase;
 
   // Filter by phase, then by group (only relevant for Vorrunde)
   const filteredByPhase = (matches ?? []).filter(
@@ -108,9 +109,9 @@ export function TipsPage() {
           })}
 
         </select>
-        {isReadOnly && (
+        {isViewingNonActivePhase && (
           <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
-            Nur Ansicht — aktive Phase ist {adminPhase}
+            Aktive Phase: {adminPhase}
           </span>
         )}
       </div>
@@ -122,7 +123,7 @@ export function TipsPage() {
         </div>
       )}
 
-      <div className={`space-y-3 ${isReadOnly ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className="space-y-3">
         {filtered.length === 0 ? (
           <p className="text-center text-gray-500 py-12">Keine Spiele gefunden.</p>
         ) : (
@@ -133,7 +134,7 @@ export function TipsPage() {
               tip={tipMap[match.id]}
               onTipSaved={handleTipSaved}
               isLoggedIn={!!user}
-              readOnly={isReadOnly}
+              readOnly={false}
             />
           ))
         )}
