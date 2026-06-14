@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { fetchAdminMatches, setMatchResult } from '../api/admin';
+import { fetchAdminMatches, setMatchResult, fetchLiveResults } from '../api/admin';
+import type { LiveResult } from '../api/admin';
 import { getPasswordRules, updatePasswordRules } from '../api/settings';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { format } from 'date-fns';
@@ -19,6 +20,11 @@ export function AdminPage() {
 
   const [editing, setEditing] = useState<{ matchId: number; home: string; away: string } | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Live result sync state
+  const [liveResults, setLiveResults] = useState<LiveResult[] | null>(null);
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [applyLoading, setApplyLoading] = useState(false);
 
   // Password rules
   const { data: pwRules } = useQuery<PasswordRules>({
@@ -68,6 +74,52 @@ export function AdminPage() {
     }
   }
 
+  async function handleFetchLiveResults() {
+    setFetchLoading(true);
+    try {
+      const resp = await fetchLiveResults();
+      setLiveResults(resp.results);
+      if (resp.new_count === 0) {
+        toast.success('Alle bekannten Ergebnisse sind bereits eingetragen.');
+      } else {
+        toast.success(`${resp.new_count} neue Ergebnis${resp.new_count === 1 ? '' : 'se'} gefunden.`);
+      }
+    } catch (err: unknown) {
+      toast.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Abruf fehlgeschlagen');
+    } finally {
+      setFetchLoading(false);
+    }
+  }
+
+  async function handleApplyAll() {
+    if (!liveResults) return;
+    const pending = liveResults.filter(r => !r.already_saved);
+    if (pending.length === 0) return;
+    setApplyLoading(true);
+    let success = 0;
+    let failed = 0;
+    for (const r of pending) {
+      try {
+        await setMatchResult(r.match_id, r.home_goals, r.away_goals);
+        success++;
+        // Mark as saved in local state
+        setLiveResults(prev =>
+          prev?.map(lr => lr.match_id === r.match_id ? { ...lr, already_saved: true } : lr) ?? null
+        );
+      } catch {
+        failed++;
+      }
+    }
+    setApplyLoading(false);
+    if (failed === 0) {
+      toast.success(`${success} Ergebnis${success === 1 ? '' : 'se'} erfolgreich übernommen!`);
+    } else {
+      toast.error(`${success} übernommen, ${failed} fehlgeschlagen.`);
+    }
+    await queryClient.invalidateQueries({ queryKey: ['adminMatches'] });
+    await queryClient.invalidateQueries({ queryKey: ['matches'] });
+  }
+
   if (isLoading) return <LoadingSpinner message="Spiele werden geladen..." />;
 
   const GROUP_STAGE = ['A','B','C','D','E','F','G','H','I','J','K','L'];
@@ -85,6 +137,8 @@ export function AdminPage() {
     const ki = KO_PHASES.indexOf(key);
     return ki >= 0 ? `1_${ki}` : `2_${key}`;
   }
+
+  const newResults = liveResults?.filter(r => !r.already_saved) ?? [];
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -132,7 +186,7 @@ export function AdminPage() {
 
       {/* Passwortregeln */}
       {rules && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-8">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
           <h2 className="text-base font-bold text-wm-dark mb-4">Passwortregeln</h2>
           <div className="space-y-4">
             <div className="flex items-center gap-4">
@@ -184,8 +238,85 @@ export function AdminPage() {
         </div>
       )}
 
-      {/* Spielergebnisse */}
+      {/* ── Aktuelle Ergebnisse abrufen ── */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-8">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-bold text-wm-dark">Aktuelle Ergebnisse abrufen</h2>
+            {liveResults && (
+              <p className="text-xs text-gray-500 mt-0.5">
+                {liveResults.length} Spiel{liveResults.length !== 1 ? 'e' : ''} gefunden
+                {newResults.length > 0
+                  ? ` · ${newResults.length} neu`
+                  : ' · alle bereits eingetragen'}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={handleFetchLiveResults}
+            disabled={fetchLoading || applyLoading}
+            className="shrink-0 flex items-center gap-2 px-4 py-2 bg-wm-green text-white text-sm font-semibold rounded-lg
+                       hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {fetchLoading ? (
+              <>
+                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"/>
+                </svg>
+                Abrufen…
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m0 0A8 8 0 0112 4a8 8 0 018 8H4m.582-3H20v5m0 0a8 8 0 01-8 8 8 8 0 01-8-8h4" />
+                </svg>
+                Aktuelle Ergebnisse abrufen
+              </>
+            )}
+          </button>
+        </div>
 
+        {liveResults && liveResults.length > 0 && (
+          <div className="mt-4 space-y-1.5">
+            {liveResults.map(r => (
+              <div
+                key={r.match_id}
+                className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm
+                  ${r.already_saved ? 'bg-gray-50 text-gray-400' : 'bg-green-50 border border-green-200 text-gray-800'}`}
+              >
+                <span className={r.already_saved ? '' : 'font-medium'}>
+                  {r.home_team}
+                  <span className="mx-2 font-bold tabular-nums">{r.home_goals}:{r.away_goals}</span>
+                  {r.away_team}
+                </span>
+                {r.already_saved ? (
+                  <span className="text-xs text-gray-400 shrink-0">✓ eingetragen</span>
+                ) : (
+                  <span className="text-xs font-semibold text-green-700 bg-green-100 px-1.5 py-0.5 rounded shrink-0">NEU</span>
+                )}
+              </div>
+            ))}
+
+            {newResults.length > 0 && (
+              <div className="pt-3">
+                <button
+                  onClick={handleApplyAll}
+                  disabled={applyLoading}
+                  className="w-full py-2 bg-wm-green text-white text-sm font-semibold rounded-lg
+                             hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {applyLoading
+                    ? 'Wird übernommen…'
+                    : `${newResults.length} neue${newResults.length === 1 ? 's' : ''} Ergebnis${newResults.length === 1 ? '' : 'se'} übernehmen`}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Spielergebnisse */}
       {Object.entries(grouped).sort(([a], [b]) => sectionSortKey(a).localeCompare(sectionSortKey(b))).map(([group, groupMatches]) => (
         <div key={group} className="mb-8">
           <h2 className="text-lg font-bold text-wm-dark mb-3 flex items-center gap-2">

@@ -11,6 +11,27 @@ export async function setMatchResult(matchId: number, homeGoals: number, awayGoa
   return data;
 }
 
+export interface LiveResult {
+  match_id: number;
+  match_number: number;
+  home_team: string;
+  away_team: string;
+  home_goals: number;
+  away_goals: number;
+  already_saved: boolean;
+}
+
+export interface FetchResultsResponse {
+  results: LiveResult[];
+  total: number;
+  new_count: number;
+}
+
+export async function fetchLiveResults(): Promise<FetchResultsResponse> {
+  const { data } = await api.get<FetchResultsResponse>('/admin/fetch-results');
+  return data;
+}
+
 export async function updateAvatar(file: File): Promise<{ avatar_url: string }> {
   const form = new FormData();
   form.append('avatar', file);
