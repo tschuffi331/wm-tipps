@@ -2,9 +2,12 @@
 
 PUT /api/admin/matches/:id/result   — enter match result + recalculate tips
 GET /api/admin/matches              — all matches for admin panel
+GET /api/admin/fetch-results        — fetch live results from external source
 GET /api/admin/settings             — password rules + wm_phase
 PUT /api/admin/settings             — update settings
 """
+import json
+import urllib.request
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
@@ -16,6 +19,17 @@ from utils.password_validator import get_password_rules
 router = APIRouter()
 
 WM_PHASES = ["Vorrunde", "Sechzehntelfinale", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale"]
+
+# Team name normalization: worldcup26.ir names → our DB names
+_TEAM_NAME_MAP: dict[str, str] = {
+    "Czech Republic": "Czechia",
+    "United States": "USA",
+    "Democratic Republic of the Congo": "DR Congo",
+}
+
+
+def _normalize_team(name: str) -> str:
+    return _TEAM_NAME_MAP.get(name, name)
 
 
 def _get_wm_phase() -> str:
@@ -53,6 +67,71 @@ def set_result(match_id: int, body: ResultBody, auth: dict = Depends(require_adm
         "homeGoals": body.homeGoals,
         "awayGoals": body.awayGoals,
     }
+
+
+# ── GET /api/admin/fetch-results ─────────────────────────────────────────────
+@router.get("/fetch-results")
+def fetch_live_results(auth: dict = Depends(require_admin)):
+    """Fetch finished match results from worldcup26.ir and compare with our DB."""
+    try:
+        req = urllib.request.Request(
+            "https://worldcup26.ir/get/games",
+            headers={"User-Agent": "wm-tipps-2026/1.0"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            games: list[dict] = json.loads(resp.read())
+    except Exception as exc:
+        raise HTTPException(502, f"Externe Datenquelle nicht erreichbar: {exc}")
+
+    conn = get_db()
+    rows = conn.execute(
+        """
+        SELECT m.id, m.match_number, m.home_goals, m.away_goals, m.status,
+               ht.name AS home_name, at.name AS away_name
+        FROM matches m
+        LEFT JOIN teams ht ON ht.id = m.home_team_id
+        LEFT JOIN teams at ON at.id = m.away_team_id
+        WHERE m.home_team_id IS NOT NULL AND m.away_team_id IS NOT NULL
+        """
+    ).fetchall()
+
+    match_lookup: dict[tuple[str, str], dict] = {
+        (r["home_name"], r["away_name"]): dict(r) for r in rows
+    }
+
+    results = []
+    for g in games:
+        if g.get("finished") != "TRUE":
+            continue
+        home = _normalize_team(g.get("home_team_name_en", ""))
+        away = _normalize_team(g.get("away_team_name_en", ""))
+        try:
+            home_goals = int(g["home_score"])
+            away_goals = int(g["away_score"])
+        except (ValueError, KeyError, TypeError):
+            continue
+
+        db_match = match_lookup.get((home, away))
+        if db_match is None:
+            continue
+
+        already_saved = (
+            db_match["status"] == "finished"
+            and db_match["home_goals"] == home_goals
+            and db_match["away_goals"] == away_goals
+        )
+        results.append({
+            "match_id": db_match["id"],
+            "match_number": db_match["match_number"],
+            "home_team": home,
+            "away_team": away,
+            "home_goals": home_goals,
+            "away_goals": away_goals,
+            "already_saved": already_saved,
+        })
+
+    new_count = sum(1 for r in results if not r["already_saved"])
+    return {"results": results, "total": len(results), "new_count": new_count}
 
 
 # ── GET /api/admin/matches ────────────────────────────────────────────────────
