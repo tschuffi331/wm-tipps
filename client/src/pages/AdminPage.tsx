@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { fetchAdminMatches, setMatchResult } from '../api/admin';
-import type { LiveResult } from '../api/admin';
+import { fetchAdminMatches, setMatchResult, fetchAdminUsers, renameUser, deleteUser } from '../api/admin';
+import type { LiveResult, AdminUser } from '../api/admin';
 import { getPasswordRules, updatePasswordRules } from '../api/settings';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { format } from 'date-fns';
@@ -26,6 +26,47 @@ export function AdminPage() {
 
   const [editing, setEditing] = useState<{ matchId: number; home: string; away: string } | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // User management state
+  const { data: adminUsers, isLoading: usersLoading, refetch: refetchUsers } = useQuery<AdminUser[]>({
+    queryKey: ['adminUsers'],
+    queryFn: fetchAdminUsers,
+  });
+  const [renamingUser, setRenamingUser] = useState<{ username: string; draft: string } | null>(null);
+  const [renameSaving, setRenameSaving] = useState(false);
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
+  const [deleteInProgress, setDeleteInProgress] = useState(false);
+
+  async function handleRenameUser() {
+    if (!renamingUser) return;
+    const trimmed = renamingUser.draft.trim();
+    if (!trimmed || trimmed === renamingUser.username) { setRenamingUser(null); return; }
+    setRenameSaving(true);
+    try {
+      await renameUser(renamingUser.username, trimmed);
+      toast.success(`Benutzer umbenannt zu „${trimmed}"`);
+      setRenamingUser(null);
+      refetchUsers();
+    } catch (err: unknown) {
+      toast.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Umbenennung fehlgeschlagen');
+    } finally {
+      setRenameSaving(false);
+    }
+  }
+
+  async function handleDeleteUser(username: string) {
+    setDeleteInProgress(true);
+    try {
+      await deleteUser(username);
+      toast.success(`Benutzer „${username}" gelöscht`);
+      setDeletingUser(null);
+      refetchUsers();
+    } catch (err: unknown) {
+      toast.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Löschen fehlgeschlagen');
+    } finally {
+      setDeleteInProgress(false);
+    }
+  }
 
   // Live result sync state
   const [liveResults, setLiveResults] = useState<LiveResult[] | null>(null);
@@ -282,6 +323,88 @@ export function AdminPage() {
           )}
         </div>
       )}
+
+      {/* ── Benutzer ändern ── */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
+        <h2 className="text-base font-bold text-wm-dark mb-4">Benutzer ändern</h2>
+        {usersLoading ? (
+          <p className="text-sm text-gray-500">Laden…</p>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {adminUsers?.map(user => (
+              <div key={user.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+                {renamingUser?.username === user.username ? (
+                  <>
+                    <input
+                      type="text"
+                      value={renamingUser.draft}
+                      onChange={e => setRenamingUser({ ...renamingUser, draft: e.target.value })}
+                      onKeyDown={e => { if (e.key === 'Enter') handleRenameUser(); if (e.key === 'Escape') setRenamingUser(null); }}
+                      autoFocus
+                      className="flex-1 border-2 border-wm-green rounded-lg px-3 py-1 text-sm focus:outline-none"
+                    />
+                    <button
+                      onClick={handleRenameUser}
+                      disabled={renameSaving}
+                      className="px-3 py-1.5 bg-wm-green text-white text-xs font-semibold rounded-lg hover:bg-green-800 disabled:opacity-50 transition-colors"
+                    >
+                      {renameSaving ? '…' : 'OK'}
+                    </button>
+                    <button
+                      onClick={() => setRenamingUser(null)}
+                      className="px-2 py-1.5 text-gray-500 hover:text-gray-700 text-xs"
+                    >
+                      Abbrechen
+                    </button>
+                  </>
+                ) : deletingUser === user.username ? (
+                  <>
+                    <span className="flex-1 text-sm text-red-700 font-medium">
+                      „{user.username}" wirklich löschen? Alle Tipps werden entfernt.
+                    </span>
+                    <button
+                      onClick={() => handleDeleteUser(user.username)}
+                      disabled={deleteInProgress}
+                      className="px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                    >
+                      {deleteInProgress ? '…' : 'Ja, löschen'}
+                    </button>
+                    <button
+                      onClick={() => setDeletingUser(null)}
+                      className="px-2 py-1.5 text-gray-500 hover:text-gray-700 text-xs"
+                    >
+                      Abbrechen
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex-1 text-sm text-gray-800">
+                      {user.username}
+                      {user.is_admin && (
+                        <span className="ml-2 text-xs font-medium text-wm-green">Admin</span>
+                      )}
+                    </span>
+                    <button
+                      onClick={() => { setDeletingUser(null); setRenamingUser({ username: user.username, draft: user.username }); }}
+                      className="text-xs px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:border-wm-green hover:text-wm-green transition-colors"
+                    >
+                      Umbenennen
+                    </button>
+                    <button
+                      onClick={() => { setRenamingUser(null); setDeletingUser(user.username); }}
+                      disabled={user.is_admin}
+                      title={user.is_admin ? 'Admin-Benutzer können nicht gelöscht werden' : undefined}
+                      className="text-xs px-3 py-1.5 border border-red-200 rounded-lg text-red-500 hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Löschen
+                    </button>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ── Aktuelle Ergebnisse abrufen ── */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-8">

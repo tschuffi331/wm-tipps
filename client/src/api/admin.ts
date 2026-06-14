@@ -21,6 +21,25 @@ export interface LiveResult {
   already_saved: boolean;
 }
 
+export interface AdminUser {
+  id: number;
+  username: string;
+  is_admin: boolean;
+}
+
+export async function fetchAdminUsers(): Promise<AdminUser[]> {
+  const { data } = await api.get<AdminUser[]>('/admin/users');
+  return data;
+}
+
+export async function renameUser(username: string, newUsername: string): Promise<void> {
+  await api.put(`/admin/users/${encodeURIComponent(username)}`, { new_username: newUsername });
+}
+
+export async function deleteUser(username: string): Promise<void> {
+  await api.delete(`/admin/users/${encodeURIComponent(username)}`);
+}
+
 export async function updateAvatar(file: File): Promise<{ avatar_url: string }> {
   const form = new FormData();
   form.append('avatar', file);
