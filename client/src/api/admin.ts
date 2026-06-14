@@ -21,17 +21,6 @@ export interface LiveResult {
   already_saved: boolean;
 }
 
-export interface FetchResultsResponse {
-  results: LiveResult[];
-  total: number;
-  new_count: number;
-}
-
-export async function fetchLiveResults(): Promise<FetchResultsResponse> {
-  const { data } = await api.get<FetchResultsResponse>('/admin/fetch-results');
-  return data;
-}
-
 export async function updateAvatar(file: File): Promise<{ avatar_url: string }> {
   const form = new FormData();
   form.append('avatar', file);

@@ -79,7 +79,8 @@ def fetch_live_results(auth: dict = Depends(require_admin)):
             headers={"User-Agent": "wm-tipps-2026/1.0"},
         )
         with urllib.request.urlopen(req, timeout=10) as resp:
-            games: list[dict] = json.loads(resp.read())
+            payload = json.loads(resp.read())
+            games: list[dict] = payload.get("games", payload) if isinstance(payload, dict) else payload
     except Exception as exc:
         raise HTTPException(502, f"Externe Datenquelle nicht erreichbar: {exc}")
 
