@@ -20,6 +20,39 @@ router = APIRouter()
 
 WM_PHASES = ["Vorrunde", "Sechzehntelfinale", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale"]
 
+
+# ── GET /api/admin/users ──────────────────────────────────────────────────────
+@router.get("/users")
+def list_users(auth: dict = Depends(require_admin)):
+    rows = get_db().execute(
+        "SELECT id, username, role FROM users ORDER BY username COLLATE NOCASE"
+    ).fetchall()
+    return [{"id": r["id"], "username": r["username"], "is_admin": r["role"] == "admin"} for r in rows]
+
+
+# ── PUT /api/admin/users/:username ────────────────────────────────────────────
+class RenameBody(BaseModel):
+    new_username: str
+
+
+@router.put("/users/{username}")
+def rename_user(username: str, body: RenameBody, auth: dict = Depends(require_admin)):
+    new_name = body.new_username.strip()
+    if not new_name:
+        raise HTTPException(400, "new_username must not be empty")
+    conn = get_db()
+    row = conn.execute("SELECT id FROM users WHERE username = ? COLLATE NOCASE", (username,)).fetchone()
+    if not row:
+        raise HTTPException(404, f"User '{username}' not found")
+    conflict = conn.execute(
+        "SELECT id FROM users WHERE username = ? COLLATE NOCASE", (new_name,)
+    ).fetchone()
+    if conflict and conflict["id"] != row["id"]:
+        raise HTTPException(409, f"Benutzername '{new_name}' ist bereits vergeben")
+    conn.execute("UPDATE users SET username = ? WHERE id = ?", (new_name, row["id"]))
+    conn.commit()
+    return {"message": f"User '{username}' renamed to '{new_name}'"}
+
 # Team name normalization: worldcup26.ir names → our DB names
 _TEAM_NAME_MAP: dict[str, str] = {
     "Czech Republic": "Czechia",
@@ -186,9 +219,11 @@ def admin_matches(auth: dict = Depends(require_admin)):
 @router.delete("/users/{username}")
 def delete_user(username: str, auth: dict = Depends(require_admin)):
     conn = get_db()
-    row = conn.execute("SELECT id FROM users WHERE username = ? COLLATE NOCASE", (username,)).fetchone()
+    row = conn.execute("SELECT id, role FROM users WHERE username = ? COLLATE NOCASE", (username,)).fetchone()
     if not row:
         raise HTTPException(404, f"User '{username}' not found")
+    if row["role"] == "admin":
+        raise HTTPException(403, "Admin-Benutzer können nicht gelöscht werden")
     uid = row["id"]
     conn.execute("DELETE FROM tips WHERE user_id = ?", (uid,))
     conn.execute("DELETE FROM users WHERE id = ?", (uid,))
