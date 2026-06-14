@@ -146,12 +146,18 @@ export function MatchCard({ match, tip, onTipSaved, isLoggedIn, readOnly = false
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5 min-w-0">
             <span className="text-xl shrink-0" aria-hidden="true">{match.home_team.flag_emoji ?? ''}</span>
-            <span className="font-semibold text-sm text-gray-800 truncate">{match.home_team.short_name}</span>
+            <div className="min-w-0">
+              <div className="font-semibold text-sm text-gray-800 truncate">{match.home_team.short_name}</div>
+              <div className="text-xs text-gray-500 truncate">{match.home_team.name}</div>
+            </div>
           </div>
-          <span className="text-gray-300 font-bold px-1" aria-hidden="true">vs</span>
+          <span className="text-gray-300 font-bold px-2 shrink-0" aria-hidden="true">vs</span>
           <div className="flex items-center gap-1.5 min-w-0 flex-row-reverse">
             <span className="text-xl shrink-0" aria-hidden="true">{match.away_team.flag_emoji ?? ''}</span>
-            <span className="font-semibold text-sm text-gray-800 truncate">{match.away_team.short_name}</span>
+            <div className="min-w-0 text-right">
+              <div className="font-semibold text-sm text-gray-800 truncate">{match.away_team.short_name}</div>
+              <div className="text-xs text-gray-500 truncate">{match.away_team.name}</div>
+            </div>
           </div>
         </div>
         <div className="flex flex-col items-center gap-1.5">

@@ -3,7 +3,7 @@
 Tipp-App für die FIFA Herren-Weltmeisterschaft 2026 (USA · Kanada · Mexiko).
 Mehrere Benutzer können sich registrieren, für alle 72 Vorrundenspiele tippen und sich auf der Rangliste messen.
 
-**Live:** https://tschuffi331.github.io/wm-tipps/ · **API:** https://wm-tipps-api.railway.app/api/health
+**Live:** https://tschuffi331.github.io/wm-tipps/ · **API:** https://wm-tipps-production.up.railway.app/api/health
 
 ---
 
@@ -34,11 +34,11 @@ Mehrere Benutzer können sich registrieren, für alle 72 Vorrundenspiele tippen 
 | Bereich | Stack |
 |---------|-------|
 | Frontend | React 18, Vite, TypeScript, Tailwind CSS |
-| Backend | Node.js 20, Express, SQLite (better-sqlite3) |
-| Auth | JWT (jsonwebtoken + bcryptjs) |
-| Avatare | multer + sharp (Upload), DiceBear API (Fallback) |
+| Backend | Python 3.12, FastAPI, SQLite |
+| Auth | JWT (PyJWT + bcrypt) |
+| Avatare | Pillow (Upload), DiceBear API (Fallback) |
 | CI/CD | GitHub Actions |
-| Hosting | GitHub Pages (Frontend) + Railway (Backend) |
+| Hosting | GitHub Pages (Frontend) + Railway via Docker (Backend) |
 
 ---
 
@@ -46,7 +46,8 @@ Mehrere Benutzer können sich registrieren, für alle 72 Vorrundenspiele tippen 
 
 ### Voraussetzungen
 
-- Node.js 20+
+- Python 3.12+
+- Node.js 20+ (nur für den Client)
 - Git
 
 ### 1. Repository klonen
@@ -61,8 +62,8 @@ cd wm-tipps
 ```bash
 cd server
 cp .env.example .env        # JWT_SECRET setzen!
-npm install
-npm run dev                  # API auf http://localhost:3001
+pip install -r requirements.txt
+uvicorn main:app --reload --port 3001   # API auf http://localhost:3001
 ```
 
 ### 3. Client starten (neues Terminal)
@@ -80,7 +81,11 @@ Nach dem Registrieren über die Web-Oberfläche:
 
 ```bash
 cd server
-npx tsx -e "import db from './src/db/database.js'; db.prepare(\"UPDATE users SET role='admin' WHERE username=?\").run('DEIN_USERNAME');"
+python - <<'EOF'
+from db.database import get_connection
+with get_connection() as conn:
+    conn.execute("UPDATE users SET role='admin' WHERE username=?", ("DEIN_USERNAME",))
+EOF
 ```
 
 ---
@@ -98,9 +103,10 @@ Jeder Push auf `main` triggert automatisch den passenden GitHub Actions Workflow
 ### Backend → Railway
 
 1. [Railway](https://railway.app) Projekt anlegen → "Deploy from GitHub Repo" → Root-Verzeichnis: `server/`
-2. Umgebungsvariablen im Railway-Dashboard setzen (siehe unten)
-3. GitHub Secret `RAILWAY_TOKEN` setzen
-4. Push auf `main` mit Änderungen in `server/` → `railway up --detach --service wm-tipps`
+2. Railway erkennt das `Dockerfile` automatisch und baut ein Python-Image
+3. Umgebungsvariablen im Railway-Dashboard setzen (siehe unten)
+4. GitHub Secret `RAILWAY_TOKEN` setzen
+5. Push auf `main` mit Änderungen in `server/` → `railway up --detach --service wm-tipps`
 
 ### Umgebungsvariablen (Server)
 
@@ -112,7 +118,6 @@ Jeder Push auf `main` triggert automatisch den passenden GitHub Actions Workflow
 | `DATABASE_PATH` | – | `./data/wm2026.db` | SQLite-Datei |
 | `UPLOADS_DIR` | – | `./uploads` | Verzeichnis für Profilbilder |
 | `ALLOWED_ORIGINS` | – | `https://tschuffi331.github.io` | CORS-Whitelist (kommagetrennt) |
-| `NODE_ENV` | – | `production` | `production` deaktiviert tsx |
 
 ---
 
@@ -127,13 +132,15 @@ wm-tipps/
 │       ├── context/         # AuthContext (JWT)
 │       ├── pages/           # Je Route eine Page-Komponente
 │       └── types/           # Shared TypeScript Types
-├── server/                  # Node.js + Express Backend
-│   └── src/
-│       ├── db/              # SQLite, Migrations, Seeds
-│       ├── middleware/       # Auth, isAdmin, Upload, ErrorHandler
-│       ├── routes/          # REST-Endpunkte
-│       ├── services/        # scoringService, avatarService
-│       └── utils/           # passwordValidator
+├── server/                  # Python + FastAPI Backend
+│   ├── main.py              # App-Einstiegspunkt (uvicorn)
+│   ├── requirements.txt     # Python-Abhängigkeiten
+│   ├── Dockerfile           # Docker-Image für Railway
+│   ├── db/                  # SQLite, Migrations, Seeds
+│   ├── middleware/          # Auth, isAdmin, Upload
+│   ├── routes/              # REST-Endpunkte (FastAPI Router)
+│   ├── services/            # scoringService, avatarService
+│   └── utils/               # passwordValidator
 ├── docs/                    # Technische Dokumentation
 │   ├── API.md               # REST API Referenz
 │   ├── ARCHITECTURE.md      # Architektur-Übersicht
