@@ -20,6 +20,17 @@ router = APIRouter()
 
 WM_PHASES = ["Vorrunde", "Sechzehntelfinale", "Achtelfinale", "Viertelfinale", "Halbfinale", "Finale"]
 
+# Team name normalization: worldcup26.ir names → our DB names
+_TEAM_NAME_MAP: dict[str, str] = {
+    "Czech Republic": "Czechia",
+    "United States": "USA",
+    "Democratic Republic of the Congo": "DR Congo",
+}
+
+
+def _normalize_team(name: str) -> str:
+    return _TEAM_NAME_MAP.get(name, name)
+
 
 # ── GET /api/admin/users ──────────────────────────────────────────────────────
 @router.get("/users")
