@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { fetchAdminMatches, setMatchResult, fetchLiveResults } from '../api/admin';
+import { fetchAdminMatches, setMatchResult } from '../api/admin';
 import type { LiveResult } from '../api/admin';
 import { getPasswordRules, updatePasswordRules } from '../api/settings';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
@@ -9,6 +9,12 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import type { Match, PasswordRules, WmPhase } from '../types';
 import { WM_PHASES } from '../types';
+
+const TEAM_NAME_MAP: Record<string, string> = {
+  'Czech Republic': 'Czechia',
+  'United States': 'USA',
+  'Democratic Republic of the Congo': 'DR Congo',
+};
 
 export function AdminPage() {
   useEffect(() => { document.title = 'Admin — WM Tipps 2026'; }, []);
@@ -75,17 +81,56 @@ export function AdminPage() {
   }
 
   async function handleFetchLiveResults() {
+    if (!matches) return;
     setFetchLoading(true);
     try {
-      const resp = await fetchLiveResults();
-      setLiveResults(resp.results);
-      if (resp.new_count === 0) {
+      const resp = await fetch('https://worldcup26.ir/get/games');
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const games: Array<Record<string, string>> = Array.isArray(data) ? data : (data.games ?? []);
+
+      const matchLookup = new Map<string, Match>();
+      for (const m of matches) {
+        if (m.home_team.name && m.away_team.name) {
+          matchLookup.set(`${m.home_team.name}|${m.away_team.name}`, m);
+        }
+      }
+
+      const results: LiveResult[] = [];
+      for (const g of games) {
+        if (g.finished !== 'TRUE') continue;
+        const home = TEAM_NAME_MAP[g.home_team_name_en] ?? g.home_team_name_en;
+        const away = TEAM_NAME_MAP[g.away_team_name_en] ?? g.away_team_name_en;
+        const homeGoals = parseInt(g.home_score, 10);
+        const awayGoals = parseInt(g.away_score, 10);
+        if (isNaN(homeGoals) || isNaN(awayGoals)) continue;
+
+        const match = matchLookup.get(`${home}|${away}`);
+        if (!match) continue;
+
+        results.push({
+          match_id: match.id,
+          match_number: match.match_number,
+          home_team: home,
+          away_team: away,
+          home_goals: homeGoals,
+          away_goals: awayGoals,
+          already_saved:
+            match.status === 'finished' &&
+            match.home_goals === homeGoals &&
+            match.away_goals === awayGoals,
+        });
+      }
+
+      setLiveResults(results);
+      const newCount = results.filter(r => !r.already_saved).length;
+      if (newCount === 0) {
         toast.success('Alle bekannten Ergebnisse sind bereits eingetragen.');
       } else {
-        toast.success(`${resp.new_count} neue Ergebnis${resp.new_count === 1 ? '' : 'se'} gefunden.`);
+        toast.success(`${newCount} neue${newCount === 1 ? 's' : ''} Ergebnis${newCount === 1 ? '' : 'se'} gefunden.`);
       }
     } catch (err: unknown) {
-      toast.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Abruf fehlgeschlagen');
+      toast.error('Abruf fehlgeschlagen: ' + (err instanceof Error ? err.message : 'Unbekannter Fehler'));
     } finally {
       setFetchLoading(false);
     }
