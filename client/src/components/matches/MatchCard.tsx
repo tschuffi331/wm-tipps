@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import toast from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
 import type { Match, Tip } from '../../types';
 import { TipInput } from './TipInput';
 import { PointsBadge } from '../common/PointsBadge';
 import { CountdownTimer } from '../common/CountdownTimer';
-import { submitTip, updateTip } from '../../api/tips';
+import { submitTip, updateTip, fetchMatchTips } from '../../api/tips';
+import { useAuth } from '../../context/AuthContext';
 
 interface MatchCardProps {
   match: Match;
@@ -20,6 +22,7 @@ interface MatchCardProps {
 const GROUP_STAGE = ['A','B','C','D','E','F','G','H','I','J','K','L'];
 
 export function MatchCard({ match, tip, onTipSaved, isLoggedIn, readOnly = false }: MatchCardProps) {
+  const { user } = useAuth();
   const kickoff    = new Date(match.kickoff_utc);
 
   // Force a re-render exactly when the match starts so isPast flips reliably
@@ -35,6 +38,13 @@ export function MatchCard({ match, tip, onTipSaved, isLoggedIn, readOnly = false
   const isPast     = kickoff <= new Date();
   const hasResult  = match.home_goals != null && match.away_goals != null;
   const isKoMatch  = !GROUP_STAGE.includes(match.group_name);
+
+  const { data: otherTips } = useQuery({
+    queryKey: ['matchTips', match.id],
+    queryFn: () => fetchMatchTips(match.id),
+    enabled: hasResult && isLoggedIn,
+    staleTime: 60_000,
+  });
 
   const [currentTip, setCurrentTip] = useState<Tip | undefined>(tip);
 
@@ -194,6 +204,30 @@ export function MatchCard({ match, tip, onTipSaved, isLoggedIn, readOnly = false
       {/* Venue */}
       {match.venue && (
         <div className="mt-2 text-xs text-gray-500 text-center">{match.venue}</div>
+      )}
+
+      {/* Other players' tips — only shown on finished matches for logged-in users */}
+      {hasResult && isLoggedIn && otherTips && otherTips.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <p className="text-xs font-medium text-gray-400 mb-1.5">Was haben die anderen getippt:</p>
+          <div className="space-y-1">
+            {otherTips
+              .filter(t => t.user_id !== user?.id)
+              .map(t => (
+                <div key={t.id} className="flex items-center gap-2 text-xs text-gray-600">
+                  <span className="flex-1 truncate">{t.username}</span>
+                  <span className="tabular-nums font-semibold text-gray-700">
+                    {t.home_goals_tip} : {t.away_goals_tip}
+                  </span>
+                  {t.points_awarded != null && (
+                    <span className={`font-semibold shrink-0 ${t.points_awarded > 0 ? 'text-wm-green' : 'text-gray-400'}`}>
+                      {t.points_awarded} Pt.
+                    </span>
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
       )}
     </div>
   );
