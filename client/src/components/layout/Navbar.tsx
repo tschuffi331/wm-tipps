@@ -36,6 +36,7 @@ export function Navbar() {
           {user ? (
             <>
               <NavLink to="/tips"    className={linkClass}>Meine Tipps</NavLink>
+              <NavLink to="/groups" className={linkClass}>Gruppen</NavLink>
               {user.role === 'admin' && (
                 <NavLink to="/admin" className={linkClass}>Admin</NavLink>
               )}
@@ -89,6 +90,7 @@ export function Navbar() {
           {user ? (
             <>
               <NavLink to="/tips"    onClick={close} className={linkClass}>Meine Tipps</NavLink>
+              <NavLink to="/groups" onClick={close} className={linkClass}>Gruppen</NavLink>
               {user.role === 'admin' && (
                 <NavLink to="/admin" onClick={close} className={linkClass}>Admin</NavLink>
               )}

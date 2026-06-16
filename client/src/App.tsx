@@ -12,6 +12,7 @@ import { LeaderboardPage } from './pages/LeaderboardPage';
 import { ProfilePage }    from './pages/ProfilePage';
 import { AdminPage }      from './pages/AdminPage';
 import { RulesPage }      from './pages/RulesPage';
+import { GroupsPage }     from './pages/GroupsPage';
 import { NotFoundPage }   from './pages/NotFoundPage';
 
 const queryClient = new QueryClient({
@@ -35,6 +36,9 @@ export default function App() {
 
                 <Route path="/tips" element={
                   <ProtectedRoute><TipsPage /></ProtectedRoute>
+                } />
+                <Route path="/groups" element={
+                  <ProtectedRoute><GroupsPage /></ProtectedRoute>
                 } />
                 <Route path="/profile" element={
                   <ProtectedRoute><ProfilePage /></ProtectedRoute>
