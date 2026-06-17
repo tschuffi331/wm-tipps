@@ -439,7 +439,7 @@ export function AdminPage() {
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m0 0A8 8 0 0112 4a8 8 0 018 8H4m.582-3H20v5m0 0a8 8 0 01-8 8 8 8 0 01-8-8h4" />
                 </svg>
-                Aktuelle Ergebnisse abrufen
+                Abrufen
               </>
             )}
           </button>
