@@ -4,8 +4,8 @@ Operational playbook for deploying, maintaining, and recovering the WM Tipps app
 
 **Production URLs:**
 - Frontend: https://tschuffi331.github.io/wm-tipps/
-- Backend API: https://wm-tipps-api.railway.app/api
-- Health check: https://wm-tipps-api.railway.app/api/health
+- Backend API: https://wm-tipps-production.up.railway.app/api
+- Health check: https://wm-tipps-production.up.railway.app/api/health
 - GitHub repo: https://github.com/tschuffi331/wm-tipps
 - Railway dashboard: https://railway.app/dashboard
 
@@ -72,15 +72,21 @@ After the user has registered via the web UI:
 cd server
 
 # Option A: Railway run (production)
-railway run --service wm-tipps npx tsx -e \
-  "import db from './src/db/database.js'; \
-   const r = db.prepare(\"UPDATE users SET role='admin' WHERE username=?\").run('USERNAME'); \
-   console.log(r.changes, 'rows updated');"
+railway run --service wm-tipps python - <<'EOF'
+from db.database import get_db
+conn = get_db()
+conn.execute("UPDATE users SET role='admin' WHERE username=?", ("USERNAME",))
+conn.commit()
+print("Done:", conn.execute("SELECT changes()").fetchone()[0], "rows updated")
+EOF
 
 # Option B: locally against the dev DB
-npx tsx -e \
-  "import db from './src/db/database.js'; \
-   db.prepare(\"UPDATE users SET role='admin' WHERE username=?\").run('USERNAME');"
+python - <<'EOF'
+from db.database import get_db
+conn = get_db()
+conn.execute("UPDATE users SET role='admin' WHERE username=?", ("USERNAME",))
+conn.commit()
+EOF
 ```
 
 ---
@@ -215,15 +221,27 @@ There is no self-service password reset in v1. An admin must reset the password 
 
 ```bash
 # 1. Generate a bcrypt hash for the new password
-node -e "const b=require('bcryptjs'); console.log(b.hashSync('NewPassword123', 10));"
+python - <<'EOF'
+import bcrypt
+print(bcrypt.hashpw(b"NewPassword123", bcrypt.gensalt()).decode())
+EOF
 
-# 2. Update the DB
-railway run --service wm-tipps npx tsx -e \
-  "import db from './src/db/database.js'; \
-   db.prepare(\"UPDATE users SET password=? WHERE username=?\").run('\$HASH', 'USERNAME');"
+# 2. Update the DB (replace $HASH and USERNAME)
+railway run --service wm-tipps python - <<'EOF'
+from db.database import get_db
+conn = get_db()
+conn.execute("UPDATE users SET password=? WHERE username=?", ("$HASH", "USERNAME"))
+conn.commit()
+EOF
 ```
 
 Tell the user to change their password immediately via the profile page after logging in.
+
+---
+
+### Playbook: Rename or delete a user
+
+Admins can rename and delete regular users directly from the admin panel at `/#/admin` → "Benutzer ändern". No DB access needed. Admin accounts cannot be deleted through the UI or API.
 
 ---
 
@@ -266,7 +284,7 @@ There is no automated alerting in v1. Recommended manual checks:
 
 ```bash
 # Health check (can be added to UptimeRobot or similar)
-curl https://wm-tipps-api.railway.app/api/health
+curl https://wm-tipps-production.up.railway.app/api/health
 
 # Expected response:
 # {"status":"ok","timestamp":"2026-..."}

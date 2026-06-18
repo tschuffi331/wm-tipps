@@ -1,7 +1,7 @@
 # WM Tipps 2026 — Architecture
 
 **Status:** Production  
-**Last updated:** April 2026
+**Last updated:** Juni 2026
 
 ---
 
@@ -20,31 +20,33 @@ WM Tipps is a multi-user betting/prediction app for the 2026 FIFA World Cup (USA
 ## High-Level Design
 
 ```
-┌─────────────────────────────────────────┐
-│  Browser (GitHub Pages)                 │
-│  React 18 + Vite + TypeScript           │
-│  Hash-based routing (/#/tips etc.)      │
-│                                         │
-│  AuthContext  →  localStorage JWT       │
-│  React Query  →  60s poll (leaderboard) │
-└────────────────────┬────────────────────┘
+┌─────────────────────────────────────────────┐
+│  Browser (GitHub Pages)                     │
+│  React 18 + Vite + TypeScript               │
+│  Hash-based routing (/#/tips etc.)          │
+│                                             │
+│  AuthContext  →  localStorage JWT           │
+│  React Query  →  60s poll (leaderboard)     │
+│                                             │
+│  worldcup26.ir  ←  fetchLiveResults()       │
+│  (browser fetches directly — no CORS issue) │
+└────────────────────┬────────────────────────┘
                      │ HTTPS / REST
                      │ Authorization: Bearer <JWT>
-┌────────────────────▼────────────────────┐
-│  Railway Container                      │
-│  Node.js 20 + Express                   │
-│                                         │
-│  Middleware:  Helmet · CORS · JWT auth  │
-│  Routes:      auth · matches · tips     │
-│               leaderboard · admin       │
-│               users                     │
-│  Services:    scoringService            │
-│               avatarService (DiceBear)  │
-│               passwordValidator         │
-│                                         │
-│  better-sqlite3 (WAL mode)              │
-│  data/wm2026.db                         │
-└─────────────────────────────────────────┘
+┌────────────────────▼────────────────────────┐
+│  Railway Container                          │
+│  Python 3.12 + FastAPI                      │
+│                                             │
+│  Middleware:  CORSMiddleware · JWT auth      │
+│  Routes:      auth · matches · tips         │
+│               leaderboard · admin · users   │
+│  Services:    scoring_service               │
+│               avatar_service (DiceBear)     │
+│               password_validator            │
+│                                             │
+│  SQLite (WAL mode, foreign_keys ON)         │
+│  data/wm2026.db                             │
+└─────────────────────────────────────────────┘
 ```
 
 ---
@@ -56,14 +58,15 @@ WM Tipps is a multi-user betting/prediction app for the 2026 FIFA World Cup (USA
 The app uses **HashRouter** (`/#/route`) to be compatible with GitHub Pages, which cannot handle client-side routes on a static host without a custom 404 redirect. See [ADR-003](adr/003-hash-router.md).
 
 ```
-/           → HomePage     (public)  group overview + countdown
-/#/login    → LoginPage    (public)
-/#/register → RegisterPage (public)  avatar upload + preview
-/#/tips     → TipsPage     (auth)    72 match cards + tip input
+/              → HomePage        (public)  group overview + countdown
+/#/login       → LoginPage       (public)
+/#/register    → RegisterPage    (public)  avatar upload + preview
+/#/tips        → TipsPage        (auth)    72 match cards + tip input + other players' tips after kickoff
+/#/groups      → GroupsPage      (auth)    group standings with qualification markers
 /#/leaderboard → LeaderboardPage (public)
-/#/profile  → ProfilePage  (auth)    avatar change + password change
-/#/admin    → AdminPage    (admin)   match results + password rules
-/#/regeln   → RulesPage    (public)  scoring rules + prize info
+/#/profile     → ProfilePage     (auth)    avatar change + password change
+/#/admin       → AdminPage       (admin)   match results + live fetch + user management + password rules
+/#/rules       → RulesPage       (public)  scoring rules + prize info
 ```
 
 Protected routes redirect to `/#/login` if no valid token is in `localStorage`.
@@ -96,31 +99,30 @@ JWT tokens are stored in **localStorage** (not `httpOnly` cookies) for simplicit
 
 ## Backend Architecture
 
-### Express App
+### FastAPI App
 
 ```
-app.ts
-├── helmet()           — security headers (CSP, HSTS, etc.)
-├── cors()             — dynamic allowlist from ALLOWED_ORIGINS
-├── express.json()     — request body parsing
+main.py
+├── CORSMiddleware     — dynamic allowlist from ALLOWED_ORIGINS
 ├── /uploads           — static file serving (profile pictures)
-├── /api/auth          → routes/auth.ts
-├── /api/matches       → routes/matches.ts
-├── /api/tips          → routes/tips.ts
-├── /api/leaderboard   → routes/leaderboard.ts
-├── /api/admin         → routes/admin.ts    (requireAuth + requireAdmin)
-├── /api/users         → routes/users.ts    (requireAuth)
-├── /api/health        — inline health check
-└── errorHandler()     — global error middleware
+├── /api/auth          → routes/auth.py
+├── /api/matches       → routes/matches.py
+├── /api/tips          → routes/tips.py
+├── /api/leaderboard   → routes/leaderboard.py
+├── /api/admin         → routes/admin.py    (require_admin)
+├── /api/users         → routes/users.py    (require_auth)
+└── /api/health        — inline health check
 ```
+
+FastAPI's dependency injection is used for auth: `Depends(require_auth)` / `Depends(require_admin)` on every protected route. Pydantic BaseModel handles request body validation.
 
 ### Database
 
-**SQLite** via `better-sqlite3` with WAL mode and foreign keys enabled. Runs in-process (no separate DB server). See [ADR-002](adr/002-hosting.md).
+**SQLite** via the standard `sqlite3` module with WAL mode and `PRAGMA foreign_keys = ON`. Runs in-process (no separate DB server). See [ADR-002](adr/002-hosting.md).
 
-**Migration system:** On startup, `database.ts` reads all `.sql` files from `src/db/migrations/` in alphabetical order and executes them. Migrations are idempotent (`CREATE TABLE IF NOT EXISTS`, `INSERT OR IGNORE`).
+**Migration system:** On startup, `db/database.py` reads all `.sql` files from `db/migrations/` in alphabetical order and executes them. Migrations are idempotent (`CREATE TABLE IF NOT EXISTS`, `INSERT OR IGNORE`).
 
-**Seeds:** Teams (48) and matches (72) are seeded via TypeScript scripts using `INSERT OR IGNORE`, so they are safe to re-run on each deploy without duplicating data.
+**Seeds:** Teams (48) and matches (72) are seeded via SQL `INSERT OR IGNORE` in the migration files, so they are safe to re-run on each deploy without duplicating data.
 
 #### Schema
 
@@ -148,43 +150,42 @@ settings
 
 ### Scoring Service
 
-`scoringService.ts` implements two functions:
+`services/scoring_service.py` implements two functions:
 
-```typescript
-calculatePoints(tip, result): 0 | 1 | 3
-// 3 = exact score, 1 = correct outcome, 0 = wrong
+```python
+def calculate_points(tip_home, tip_away, result_home, result_away) -> int:
+    # 3 = exact score, 1 = correct outcome, 0 = wrong
 
-recalculateMatchTips(matchId, homeGoals, awayGoals): void
-// Called by PUT /admin/matches/:id/result
-// Updates points_awarded for every tip on that match in a single transaction
+def recalculate_match_tips(match_id: int) -> None:
+    # Called by PUT /admin/matches/:id/result
+    # Updates points_awarded for every tip on that match in a single transaction
 ```
 
 ### Avatar Service
 
-`avatarService.ts` builds a DiceBear URL for the `initials` style, seeded deterministically by username:
+`services/avatar_service.py` builds a DiceBear URL for the `initials` style, seeded deterministically by username:
 
 ```
 https://api.dicebear.com/9.x/initials/svg?seed=<username>&backgroundColor=b6e3f4,c0aede
 ```
 
-Uploaded avatars are processed by `sharp` → resized to 128×128 JPEG → stored in `uploads/` with a UUID filename.
+Uploaded avatars are processed by **Pillow** → resized to 128×128 JPEG → stored in `uploads/` with a UUID filename.
 
 ### Password Validation
 
-`passwordValidator.ts` provides:
-- `getPasswordRules()` — reads `settings` table
-- `validatePassword(password, rules)` — returns an error string or `null`
+`utils/password_validator.py` provides:
+- `get_password_rules()` — reads `settings` table, returns a `PasswordRules` dataclass
+- `validate_password(password, rules)` — returns an error string or `None`
 
 Used by both `POST /auth/register` and `PUT /users/me/password` to enforce consistent rules.
 
 ### Middleware Stack
 
-| Middleware | File | Purpose |
+| Dependency | File | Purpose |
 |-----------|------|---------|
-| `requireAuth` | `middleware/auth.ts` | Verifies Bearer JWT, attaches `userId` + `userRole` to request |
-| `requireAdmin` | `middleware/isAdmin.ts` | Checks `userRole === 'admin'`, returns 403 otherwise |
-| `upload` | `middleware/upload.ts` | multer + sharp pipeline for avatar uploads |
-| `errorHandler` | `middleware/errorHandler.ts` | Catches unhandled errors, returns 500 JSON |
+| `require_auth` | `middleware/auth.py` | Verifies Bearer JWT, returns `{"user_id", "role"}` dict |
+| `require_admin` | `middleware/auth.py` | Calls `require_auth`, then checks `role == "admin"`, raises 403 otherwise |
+| `upload` | `middleware/upload.py` | UploadFile handler + Pillow resize pipeline |
 
 ---
 
@@ -259,9 +260,9 @@ git push main
      │
      └── server/** changed?
          └── deploy-backend.yml
-             npm ci → tsc (build to dist/)
              → railway up --detach --service wm-tipps
-             → Railway pulls new image, restarts container
+             → Railway builds Docker image (Python 3.12)
+             → Container starts, runs migrations, seeds data
 ```
 
 Both workflows also support **manual dispatch** via `workflow_dispatch`.
@@ -285,6 +286,6 @@ Both workflows also support **manual dispatch** via `workflow_dispatch`.
 | SQLite on Railway ephemeral filesystem | DB wiped on redeploy | Attach Railway persistent volume at `/app/data` |
 | No real-time updates | Leaderboard polls every 60s | Add WebSocket or SSE for live score updates |
 | No password reset flow | Locked-out users need admin help | Add email-based reset (requires SMTP integration) |
-| No rate limiting | Brute-force login possible | Add express-rate-limit on `/api/auth/*` |
-| KO round not yet seeded | KO point doubling has no data to apply to | Seed KO matches after group stage draw |
-| No automated tests | Regressions caught manually | Add Vitest (unit) + Playwright (e2e) |
+| No rate limiting | Brute-force login possible | Add `slowapi` rate limiter on `/api/auth/*` |
+| Live results from worldcup26.ir | External dependency; breaks if API changes | Monitor API shape; add fallback |
+| No automated tests | Regressions caught manually | Add pytest (unit) + Playwright (e2e) |
