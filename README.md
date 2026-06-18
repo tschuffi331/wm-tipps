@@ -9,13 +9,15 @@ Mehrere Benutzer können sich registrieren, für alle 72 Vorrundenspiele tippen 
 
 ## Features
 
-- Registrierung mit Benutzername + optionalem Profilbild (128×128 JPEG, via multer + sharp)
+- Registrierung mit Benutzername + optionalem Profilbild (128×128 JPEG, via Pillow + sharp)
 - Automatisch generierter DiceBear-Avatar (Initialen-Style) als Fallback
 - Tipps für alle 72 Vorrundenspiele (12 Gruppen × 6 Spiele)
 - Deadline-Guard: Tipps nur bis zum Anpfiff möglich; danach gesperrt
 - Öffentliche Rangliste (Punkte → exakte Treffer → Benutzername alphabetisch)
 - KO-Runden-Bonus: Punkte verdoppeln sich ab Achtelfinale
-- Admin-Panel: Ergebnisse eintragen, Punkte neu berechnen, Passwortregeln konfigurieren
+- **Gruppenansicht:** Tabellenstand aller 12 Gruppen mit Qualifikationsmarkierungen (Sechzehntelfinale)
+- **Andere Tipps:** Nach Spielende sind die Tipps aller Mitspieler sichtbar
+- Admin-Panel: Ergebnisse eintragen, Live-Ergebnisse von worldcup26.ir abrufen, Punkte neu berechnen, Passwortregeln konfigurieren, Benutzer umbenennen & löschen
 - Passwort ändern (Profil-Seite)
 - WCAG 2.1 AA Accessibility
 
@@ -33,10 +35,10 @@ Mehrere Benutzer können sich registrieren, für alle 72 Vorrundenspiele tippen 
 
 | Bereich | Stack |
 |---------|-------|
-| Frontend | React 18, Vite, TypeScript, Tailwind CSS |
+| Frontend | React 18, Vite, TypeScript, Tailwind CSS, TanStack Query |
 | Backend | Python 3.12, FastAPI, SQLite |
 | Auth | JWT (PyJWT + bcrypt) |
-| Avatare | Pillow (Upload), DiceBear API (Fallback) |
+| Avatare | Pillow (Upload-Resize), DiceBear API (Fallback) |
 | CI/CD | GitHub Actions |
 | Hosting | GitHub Pages (Frontend) + Railway via Docker (Backend) |
 
@@ -64,6 +66,8 @@ cd server
 cp .env.example .env        # JWT_SECRET setzen!
 pip install -r requirements.txt
 uvicorn main:app --reload --port 3001   # API auf http://localhost:3001
+
+# Datenbank + Seeds werden beim ersten Start automatisch angelegt
 ```
 
 ### 3. Client starten (neues Terminal)
@@ -82,9 +86,10 @@ Nach dem Registrieren über die Web-Oberfläche:
 ```bash
 cd server
 python - <<'EOF'
-from db.database import get_connection
-with get_connection() as conn:
-    conn.execute("UPDATE users SET role='admin' WHERE username=?", ("DEIN_USERNAME",))
+from db.database import get_db
+conn = get_db()
+conn.execute("UPDATE users SET role='admin' WHERE username=?", ("DEIN_USERNAME",))
+conn.commit()
 EOF
 ```
 
@@ -137,10 +142,16 @@ wm-tipps/
 │   ├── requirements.txt     # Python-Abhängigkeiten
 │   ├── Dockerfile           # Docker-Image für Railway
 │   ├── db/                  # SQLite, Migrations, Seeds
-│   ├── middleware/          # Auth, isAdmin, Upload
+│   ├── middleware/          # auth (PyJWT), upload (Pillow)
 │   ├── routes/              # REST-Endpunkte (FastAPI Router)
-│   ├── services/            # scoringService, avatarService
-│   └── utils/               # passwordValidator
+│   │   ├── admin.py         # Ergebnisse, Benutzer, Einstellungen
+│   │   ├── auth.py          # Register, Login
+│   │   ├── matches.py       # Spielplan
+│   │   ├── tips.py          # Tipps + fremde Tipps nach Kickoff
+│   │   ├── leaderboard.py   # Rangliste
+│   │   └── users.py         # Profil, Passwort, Avatar
+│   ├── services/            # scoring_service, avatar_service
+│   └── utils/               # password_validator
 ├── docs/                    # Technische Dokumentation
 │   ├── API.md               # REST API Referenz
 │   ├── ARCHITECTURE.md      # Architektur-Übersicht

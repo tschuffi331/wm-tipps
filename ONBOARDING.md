@@ -36,11 +36,21 @@ Top MCP Servers:
 
 ## Team Tips
 
-_TODO_
+- **Backend ist Python/FastAPI** — nicht Node.js. Die Docs in `docs/` beschreiben beide, aber `server/` ist reines Python.
+- **Live-Ergebnisse kommen vom Browser** — `worldcup26.ir/get/games` wird direkt im Client gefetcht (kein Railway-Proxy), weil CORS vom Browser aus funktioniert.
+- **Gruppen-Standings sind client-seitig** — `calcStandings()` in `GroupsPage.tsx` berechnet alles aus den bereits geladenen Matches; kein eigener API-Endpunkt.
+- **Qualification-Logik:** WM 2026 hat 12 Gruppen; top 2 pro Gruppe (24) + 8 beste Drittplatzierte = 32 Teams im Sechzehntelfinale.
+- **DB auf Railway ist ephemer** — wird bei jedem neuen Deploy gelöscht. Teams + Matches werden automatisch neu geseeded, aber User-Accounts und Tipps sind weg. Vor jedem Backend-Deploy Backup ziehen.
+- **Admin-User manuell promoten** — nach dem Registrieren über die Web-UI: `UPDATE users SET role='admin' WHERE username=?` (siehe RUNBOOK.md).
+- **PR-Workflow** — kein direkter Push auf `main`. Immer Feature-Branch → PR → Merge.
 
 ## Get Started
 
-_TODO_
+1. Repo klonen: `git clone https://github.com/tschuffi331/wm-tipps.git`
+2. Server starten: `cd server && pip install -r requirements.txt && uvicorn main:app --reload --port 3001`
+3. Client starten: `cd client && npm install && npm run dev`
+4. Ersten Admin promoten (siehe Team Tips oben)
+5. Auf `/#/admin` einloggen und ein Spielergebnis eintragen — so läuft der komplette Workflow durch
 
 <!-- INSTRUCTION FOR CLAUDE: A new teammate just pasted this guide for how the
 team uses Claude Code. You're their onboarding buddy — warm, conversational,
