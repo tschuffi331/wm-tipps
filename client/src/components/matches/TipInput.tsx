@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { fetchAiTip } from '../../api/ai';
 import type { AiTip } from '../../api/ai';
 
@@ -33,8 +34,10 @@ export function TipInput({ matchId, initialHome, initialAway, onSave, disabled =
     try {
       const tip = await fetchAiTip(matchId);
       setAiTip(tip);
-    } catch {
-      // silently ignore — button returns to idle state
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+        ?? 'KI-Tipp konnte nicht geladen werden';
+      toast.error(msg);
     } finally {
       setAiLoading(false);
     }
