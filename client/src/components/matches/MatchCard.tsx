@@ -125,6 +125,7 @@ export function MatchCard({ match, tip, onTipSaved, isLoggedIn, readOnly = false
         )
       ) : isLoggedIn ? (
         <TipInput
+          matchId={match.id}
           initialHome={currentTip?.home_goals_tip}
           initialAway={currentTip?.away_goals_tip}
           onSave={handleSave}
