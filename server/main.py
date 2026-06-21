@@ -21,7 +21,7 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from db.database import run_migrations
 from db.seeds.teams import seed_teams
 from db.seeds.matches import seed_matches
-from routes import auth, matches, tips, leaderboard, admin, users, settings
+from routes import auth, matches, tips, leaderboard, admin, users, settings, ai
 
 
 @asynccontextmanager
@@ -75,6 +75,7 @@ app.include_router(leaderboard.router, prefix="/api/leaderboard")
 app.include_router(admin.router,       prefix="/api/admin")
 app.include_router(users.router,       prefix="/api/users")
 app.include_router(settings.router,    prefix="/api/settings")
+app.include_router(ai.router,          prefix="/api/ai")
 
 
 # ── Health check ──────────────────────────────────────────────────────────────
