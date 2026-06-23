@@ -32,6 +32,8 @@ def _now() -> datetime:
 
 
 def _kickoff_dt(kickoff_utc: str) -> datetime:
+    if not kickoff_utc:
+        return datetime(9999, 12, 31, tzinfo=timezone.utc)
     return datetime.fromisoformat(kickoff_utc.replace("Z", "+00:00"))
 
 
