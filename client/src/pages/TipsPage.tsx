@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMatches } from '../api/matches';
 import { fetchMyTips } from '../api/tips';
@@ -22,6 +22,8 @@ export function TipsPage() {
   const { user } = useAuth();
   const [selectedGroup, setSelectedGroup] = useState('ALL');
   const [userPhase, setUserPhase] = useState<WmPhase | null>(null);
+  const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const hasScrolled = useRef(false);
 
   const { data: adminPhase, isLoading: phaseLoading } = useQuery({
     queryKey: ['publicPhase'],
@@ -44,6 +46,28 @@ export function TipsPage() {
   function handleTipSaved(tip: Tip) {
     setLocalTips((prev) => ({ ...prev, [tip.match_id]: tip }));
   }
+
+  // Scroll to today's first match (or next upcoming) on initial load.
+  // Must be before any conditional return to satisfy Rules of Hooks.
+  // cardRefs is empty while loading (no cards rendered), so the effect
+  // safely no-ops until the loading spinner is replaced by actual cards.
+  useEffect(() => {
+    if (hasScrolled.current || !matches?.length) return;
+    const phase: WmPhase = userPhase ?? adminPhase ?? 'Vorrunde';
+    const forPhase = matches.filter(m => matchBelongsToPhase(m.group_name, phase));
+    const todayStr = new Date().toDateString();
+    const target =
+      forPhase.find(m => new Date(m.kickoff_utc).toDateString() === todayStr) ??
+      forPhase.find(m => new Date(m.kickoff_utc) > new Date());
+    if (!target) return;
+    const el = cardRefs.current[target.id];
+    if (!el) return;
+    hasScrolled.current = true;
+    setTimeout(() => {
+      const top = el.getBoundingClientRect().top + window.scrollY - 72;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }, 80);
+  });
 
   if (matchesLoading || tipsLoading || phaseLoading) {
     return <LoadingSpinner message="Spiele werden geladen..." />;
@@ -128,14 +152,15 @@ export function TipsPage() {
           <p className="text-center text-gray-500 py-12">Keine Spiele gefunden.</p>
         ) : (
           filtered.map((match) => (
-            <MatchCard
-              key={match.id}
-              match={match}
-              tip={tipMap[match.id]}
-              onTipSaved={handleTipSaved}
-              isLoggedIn={!!user}
-              readOnly={false}
-            />
+            <div key={match.id} ref={(el) => { cardRefs.current[match.id] = el; }}>
+              <MatchCard
+                match={match}
+                tip={tipMap[match.id]}
+                onTipSaved={handleTipSaved}
+                isLoggedIn={!!user}
+                readOnly={false}
+              />
+            </div>
           ))
         )}
       </div>

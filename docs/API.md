@@ -1,6 +1,6 @@
 # WM Tipps 2026 — API Reference
 
-**Base URL (Production):** `https://wm-tipps-api.railway.app/api`  
+**Base URL (Production):** `https://wm-tipps-production.up.railway.app/api`  
 **Base URL (Local):** `http://localhost:3001/api`
 
 ---
@@ -434,24 +434,78 @@ Enter the result for a finished match. Triggers immediate recalculation of `poin
 
 ---
 
+### `GET /admin/users` 🔒 Admin
+
+Returns all registered users.
+
+**Response 200**
+```json
+[
+  { "id": 1, "username": "tschuffi331", "is_admin": true },
+  { "id": 2, "username": "peter",        "is_admin": false }
+]
+```
+
+---
+
+### `PUT /admin/users/:username` 🔒 Admin
+
+Rename a user.
+
+**Content-Type:** `application/json`
+
+```json
+{ "new_username": "new_name" }
+```
+
+**Response 200**
+```json
+{ "message": "User 'peter' renamed to 'new_name'" }
+```
+
+**Errors**
+- `400` — `new_username` is empty
+- `404` — User not found
+- `409` — New username already taken
+
+---
+
+### `DELETE /admin/users/:username` 🔒 Admin
+
+Delete a user and all their tips. Admin accounts cannot be deleted.
+
+**Response 200**
+```json
+{ "message": "User 'peter' and their tips deleted" }
+```
+
+**Errors**
+- `403` — Target user is an admin
+- `404` — User not found
+
+---
+
 ### `GET /admin/settings` 🔒 Admin
 
-Returns the current password validation rules.
+Returns the current password validation rules and active tournament phase.
 
 **Response 200**
 ```json
 {
   "minLength": 6,
   "requireDigit": false,
-  "requireSpecial": false
+  "requireSpecial": false,
+  "wmPhase": "Vorrunde"
 }
 ```
+
+Valid `wmPhase` values: `Vorrunde`, `Sechzehntelfinale`, `Achtelfinale`, `Viertelfinale`, `Halbfinale`, `Finale`.
 
 ---
 
 ### `PUT /admin/settings` 🔒 Admin
 
-Update password validation rules. Applies to all future registrations and password changes.
+Update password validation rules and/or tournament phase. All fields are optional.
 
 **Content-Type:** `application/json`
 
@@ -459,11 +513,15 @@ Update password validation rules. Applies to all future registrations and passwo
 {
   "minLength": 8,
   "requireDigit": true,
-  "requireSpecial": false
+  "requireSpecial": false,
+  "wmPhase": "Sechzehntelfinale"
 }
 ```
 
 **Response 200** — Updated settings object (same shape as `GET /admin/settings`).
+
+**Errors**
+- `400` — `minLength` out of range (1–64) or `wmPhase` not a valid value
 
 ---
 
@@ -494,4 +552,4 @@ function calculatePoints(tip: { home: number; away: number }, result: { home: nu
 }
 ```
 
-> **KO round multiplier:** Points are doubled for knockout-round matches (implemented via the match's `group_name` containing `KO` or a dedicated flag — see `scoringService.ts`).
+> **KO round multiplier:** Points are doubled for knockout-round matches (implemented via the match's `group_name` containing `KO` or a dedicated flag — see `services/scoring_service.py`).
