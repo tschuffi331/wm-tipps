@@ -122,12 +122,10 @@ export function TipsPage() {
         >
 
           {WM_PHASES.map((phase) => {
-            const adminIdx   = adminPhase ? WM_PHASES.indexOf(adminPhase) : 0;
-            const phaseIdx   = WM_PHASES.indexOf(phase);
-            const isFuture   = phaseIdx > adminIdx;
+            const hasMatches = (matches ?? []).some(m => matchBelongsToPhase(m.group_name, phase));
             return (
-              <option key={phase} value={phase} disabled={isFuture}>
-                {phase === adminPhase ? `${phase} ✓` : isFuture ? `${phase} (noch nicht geöffnet)` : phase}
+              <option key={phase} value={phase} disabled={!hasMatches}>
+                {phase === adminPhase ? `${phase} ✓` : !hasMatches ? `${phase} (noch nicht verfügbar)` : phase}
               </option>
             );
           })}

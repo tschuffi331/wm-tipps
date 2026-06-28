@@ -71,7 +71,7 @@ def run_migrations() -> None:
     """)
     _conn.commit()
 
-    migration_dir = Path(__file__).parent.parent / "src" / "db" / "migrations"
+    migration_dir = Path(__file__).parent / "migrations"
     for sql_file in sorted(migration_dir.glob("*.sql")):
         filename = sql_file.name
 
