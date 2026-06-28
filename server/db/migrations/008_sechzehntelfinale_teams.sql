@@ -1,6 +1,5 @@
 -- Sechzehntelfinale (match 73–88): set real teams from group-stage results.
--- Source: worldcup26.ir/get/games  (verified 2026-06-28)
--- Match 80 (England vs best 3rd E/H/I/J/K) — opponent TBD; home_team set only.
+-- Source: worldcup26.ir/get/games + fifa.com (verified 2026-06-28)
 
 UPDATE matches SET
   home_team_id = (SELECT id FROM teams WHERE name = 'South Africa'),
@@ -37,9 +36,10 @@ UPDATE matches SET
   away_team_id = (SELECT id FROM teams WHERE name = 'Ecuador')
 WHERE match_number = 79;
 
--- Match 80: England vs best 3rd (E/H/I/J/K) — opponent confirmed TBD
+-- Match 80: England vs DR Congo (best 3rd from K — confirmed via fifa.com)
 UPDATE matches SET
-  home_team_id = (SELECT id FROM teams WHERE name = 'England')
+  home_team_id = (SELECT id FROM teams WHERE name = 'England'),
+  away_team_id = (SELECT id FROM teams WHERE name = 'DR Congo')
 WHERE match_number = 80;
 
 UPDATE matches SET
