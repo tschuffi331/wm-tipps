@@ -1,0 +1,64 @@
+plugins {
+    id 'java'
+}
+
+group = 'de.wmtipps'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.seleniumhq.selenium:selenium-java:4.21.0'
+    testImplementation 'io.github.bonigarcia:webdrivermanager:5.8.0'
+    testRuntimeOnly   'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = false
+    }
+
+    // Pass system properties to tests; override via -Pprop=val or -Dprop=val
+    def props = [
+        'BASE_URL'      : 'https://tschuffi331.github.io/wm-tipps',
+        'TEST_USERNAME' : '',
+        'TEST_PASSWORD' : '',
+        'ADMIN_USERNAME': '',
+        'ADMIN_PASSWORD': '',
+        'HEADLESS'      : 'true',
+        'TIMEOUT_SECONDS': '15',
+    ]
+    props.each { k, defaultVal ->
+        def val = project.findProperty(k) ?: System.getProperty(k, defaultVal)
+        systemProperty k, val
+    }
+}
+
+// Convenience tasks
+task buildOnly(dependsOn: compileTestJava) {
+    group = 'verification'
+    description = 'Compile test sources without running tests.'
+}
+
+task runTests(dependsOn: test) {
+    group = 'verification'
+    description = 'Compile and run all Selenium tests.'
+}
+
+task runTestsHeaded(dependsOn: test) {
+    group = 'verification'
+    description = 'Run tests with a visible browser window.'
+    doFirst {
+        test.systemProperty 'HEADLESS', 'false'
+    }
+}
