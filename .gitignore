@@ -28,3 +28,8 @@ npm-debug.log*
 # Editor
 .vscode/
 .idea/
+
+# Selenium / Gradle
+selenium/build/
+selenium/lib/
+selenium/.gradle/
